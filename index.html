@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#171717">
+    <link rel="apple-touch-icon" href="./icono-192.png">
+
+    <script>
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado', reg))
+                    .catch(err => console.error('Error al registrar SW', err));
+            });
+        }
+    </script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CALCULADORA INTEGRAL DE MATERIALES V3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { gray: tailwind.colors.neutral } } } }
+    </script>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.04em; font-size: 14px; }
+        input, select, textarea, button { text-transform: uppercase; letter-spacing: 0.04em; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .btn-base { flex: 1; padding: 0.35rem 0; text-align: center; border-radius: 0.25rem; color: #525252; font-size: 0.75rem; font-weight: 600; transition: all 0.2s; border: 1px solid #d4d4d4; background-color: #f5f5f5; }
+        .btn-base:hover { background-color: #e5e5e5; }
+        .btn-activo { background-color: #262626 !important; border: 1px solid #171717 !important; font-weight: 700 !important; color: #ffffff !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        
+        .btn-tab { flex: 1; padding: 0.35rem 0.75rem; text-align: center; font-weight: 700; border-radius: 0.25rem; color: #525252; background: transparent; transition: all 0.2s; font-size: 0.75rem; }
+        .btn-tab.activo { background: #ffffff; color: #171717; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* SLIDERS PERSONALIZADOS */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #d4d4d4; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; background: #ffffff; border: 2px solid #262626; cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        input[type=range]::-webkit-slider-thumb:active { transform: scale(1.15); }
+        input[type=range]::-moz-range-track { width: 100%; height: 4px; cursor: pointer; background: #d4d4d4; border-radius: 2px; }
+        input[type=range]::-moz-range-thumb { height: 16px; width: 16px; border-radius: 50%; background: #ffffff; border: 2px solid #262626; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        input[type=range]::-moz-range-thumb:active { transform: scale(1.15); }
+        
+        .seccion-card { background: #fafafa; border: 1px solid #a3a3a3; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .titulo-seccion { font-size: 1.15rem; font-weight: 800; color: #171717; margin-bottom: 1.5rem; border-bottom: 2px solid #d4d4d4; padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+        .item-card { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #d4d4d4; }
+        .item-card:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    </style>
+</head>
+<body class="bg-neutral-300 p-4 md:p-8 text-neutral-900">
+
+    <div class="max-w-[90rem] mx-auto">
+        
+        <div class="mb-8 border-b-4 border-neutral-800 pb-6 flex flex-col items-start">
+            <div class="inline-block bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.0 · GESTIÓN DE PROYECTOS INTEGRADA</div>
+            <h1 class="text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none mb-2">CÓMPUTO ESTRUCTURAL</h1>
+            <p class="text-neutral-600 text-xs md:text-sm font-bold tracking-widest">SISTEMA INTEGRAL DE CÁLCULO DE HORMIGÓN Y ARMADURAS</p>
+        </div>
+
+        <div class="bg-neutral-900 rounded-xl p-4 md:p-5 shadow-xl mb-8 border border-neutral-700 flex flex-col lg:flex-row items-center gap-4 justify-between relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500 hidden md:block"></div>
+            
+            <div class="flex items-center gap-3 w-full lg:w-auto md:pl-2">
+                <label class="font-bold text-neutral-400 text-xs whitespace-nowrap hidden md:block">PROYECTO:</label>
+                <input type="text" id="gestor_nombre" class="w-full lg:w-64 bg-neutral-800 border border-neutral-600 rounded px-4 py-2.5 text-white font-bold text-xs uppercase focus:outline-none focus:border-blue-500 transition-colors" placeholder="NOMBRE DEL PROYECTO">
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                <button id="btn_guardar_local" class="flex-1 lg:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded transition-colors shadow-sm text-xs flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    GUARDAR LOCAL
+                </button>
+                <select id="gestor_lista" class="flex-1 lg:flex-none bg-neutral-800 border border-neutral-600 rounded px-3 py-2.5 text-white font-bold text-xs max-w-[200px] cursor-pointer focus:outline-none">
+                    <option value="">📂 CARGAR PROYECTO...</option>
+                </select>
+                
+                <div class="w-px h-8 bg-neutral-700 hidden lg:block mx-1"></div>
+                
+                <div class="flex flex-1 lg:flex-none items-center gap-2">
+                    <button id="btn_exportar_json" class="flex-1 lg:flex-none bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-2.5 px-4 rounded transition-colors shadow-sm text-xs border border-neutral-600">
+                        📤 EXPORTAR
+                    </button>
+                    <input type="file" id="gestor_importar" accept=".json" class="hidden">
+                    <button id="btn_importar_json" class="flex-1 lg:flex-none bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-2.5 px-4 rounded transition-colors shadow-sm text-xs border border-neutral-600">
+                        📥 IMPORTAR
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion-card">
+            <div class="titulo-seccion">
+                <span>1. FUNDACIONES</span>
+                <div class="flex items-center gap-3">
+                    <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
+                    <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="fun" data-op="-1">−</button>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_fun">1</div>
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="fun" data-op="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div id="fun_container"></div>
+        </div>
+
+        <div class="seccion-card">
+            <div class="titulo-seccion">
+                <span>2. VIGAS DE FUNDACIÓN</span>
+                <div class="flex items-center gap-3">
+                    <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
+                    <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigF" data-op="-1">−</button>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_vigF">1</div>
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigF" data-op="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div id="vigF_container"></div>
+        </div>
+
+        <div class="seccion-card">
+            <div class="titulo-seccion">
+                <span>3. COLUMNAS</span>
+                <div class="flex items-center gap-3">
+                    <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
+                    <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="cols" data-op="-1">−</button>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_cols">1</div>
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="cols" data-op="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div id="cols_container"></div>
+        </div>
+
+        <div class="seccion-card">
+            <div class="titulo-seccion">
+                <span>4. VIGAS</span>
+                <div class="flex items-center gap-3">
+                    <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
+                    <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigs" data-op="-1">−</button>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_vigs">1</div>
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigs" data-op="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div id="vigs_container"></div>
+        </div>
+
+        <div class="seccion-card">
+            <div class="titulo-seccion">
+                <span>5. LOSAS ARMADAS</span>
+                <div class="flex items-center gap-3">
+                    <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
+                    <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="los" data-op="-1">−</button>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_los">1</div>
+                        <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="los" data-op="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div id="los_container"></div>
+        </div>
+
+        <div class="bg-neutral-800 rounded-xl p-6 md:p-8 shadow-2xl text-neutral-100 mb-6 border border-neutral-900">
+            <h2 class="text-lg font-bold mb-6 flex flex-col md:flex-row items-start md:items-center justify-between border-b border-neutral-700 pb-4 gap-4">
+                <span>TOTAL DE MATERIALES</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-lg text-neutral-400">VOLUMEN DE HORMIGÓN:</span>
+                    <span id="vol_total_obra" class="text-lg text-white font-mono font-bold">0,00 M³</span>
+                </div>
+            </h2>
+            <div class="overflow-x-auto mb-8">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead><tr class="border-b-2 border-neutral-500 text-neutral-400 font-bold">
+                        <th class="py-3 px-4 text-left">MATERIAL REQUERIDO</th>
+                        <th class="py-3 px-4 text-right">NETO (0%)</th>
+                        <th class="py-3 px-4 text-right text-white">TOTAL (+10%)</th>
+                        <th class="py-3 px-4 text-right">UNIDAD DE VENTA</th>
+                        <th class="py-3 px-4 text-right">A COMPRAR</th>
+                    </tr></thead>
+                    <tbody id="tabla_total"></tbody>
+                </table>
+            </div>
+            
+            <div class="border-t border-neutral-700 pt-6">
+                <h3 class="text-sm font-bold text-neutral-400 mb-4">DATOS PARA INFORME</h3>
+                <div class="flex flex-col md:flex-row gap-4 items-center">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 w-full">
+                        <div><label class="block text-xs font-bold text-neutral-400 mb-1">NOMBRE DE OBRA</label><input type="text" id="info_obra" class="w-full bg-neutral-900 border border-neutral-700 rounded px-4 py-2 text-xs text-white placeholder-neutral-500 font-bold uppercase" placeholder="EJ. VIVIENDA UNIFAMILIAR"></div>
+                        <div><label class="block text-xs font-bold text-neutral-400 mb-1">UBICACIÓN</label><input type="text" id="info_ubi" class="w-full bg-neutral-900 border border-neutral-700 rounded px-4 py-2 text-xs text-white placeholder-neutral-500 font-bold uppercase" placeholder="EJ. LOTE 42, SAN ISIDRO"></div>
+                        <div><label class="block text-xs font-bold text-neutral-400 mb-1">COMITENTE</label><input type="text" id="info_comitente" class="w-full bg-neutral-900 border border-neutral-700 rounded px-4 py-2 text-xs text-white placeholder-neutral-500 font-bold uppercase" placeholder="EJ. FAMILIA PÉREZ"></div>
+                        <div><label class="block text-xs font-bold text-neutral-400 mb-1">PROFESIONAL A CARGO</label><input type="text" id="info_profesional" class="w-full bg-neutral-900 border border-neutral-700 rounded px-4 py-2 text-xs text-white placeholder-neutral-500 font-bold uppercase" placeholder="EJ. ING. / ARQ. JUAN DOMÍNGUEZ"></div>
+                    </div>
+                    <button id="btn_informe" class="flex flex-col items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-900 font-bold py-4 px-6 rounded border border-neutral-900 transition-all shadow-md text-xs text-center w-full md:w-40 min-h-[100px] shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        <span>GENERAR<br>INFORME PDF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pesoBolsaCemento = 50;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const recetas = { 'H17': { c: 320, a: 0.60, p: 0.70, el: 0 }, 'H21': { c: 370, a: 0.55, p: 0.77, el: 0 }, 'H25': { c: 420, a: 0.50, p: 0.80, el: 0 }, 'H30': { c: 0, a: 0, p: 0, el: 1 } };
+            
+            const defaults = {
+                fun: { tipo: 'pilotin', cant: 4, hormigon: 'H21', diamPil: 0.20, profPil: 2, diamPilVar: 10, varPil: 4, sepPilEstr: 0.15, aBase: 0.8, bBase: 0.8, hBase: 1, diamBaseVar: 10, sepBaseArm: 0.15, mat: {neto:{},bruto:{}} },
+                vigF: { cant: 2, a: 0.20, h: 0.40, l: 4, hormigon: 'H21', diamSup: 10, varSup: 2, diamInf: 12, varInf: 3, sepEstr: 0.15, mat: {neto:{},bruto:{}} },
+                cols: { cant: 4, a: 0.20, b: 0.20, h: 3, hormigon: 'H21', diam: 12, varillas: 4, sep: 0.15, mat: {neto:{},bruto:{}} },
+                vigs: { cant: 2, a: 0.15, h: 0.30, l: 4, hormigon: 'H21', diamSup: 8, varSup: 2, diamInf: 10, varInf: 2, sepEstr: 0.15, mat: {neto:{},bruto:{}} },
+                los: { tipo: 'cuadrada', cant: 1, a: 4, l: 5, e: 0.12, hormigon: 'H21', diamPpal: 8, sepPpal: 0.15, diamRep: 6, sepRep: 0.20, mat: {neto:{},bruto:{}} }
+            };
+
+            // ESTADO PRINCIPAL DE LA CALCULADORA
+            let estado = { fun: [JSON.parse(JSON.stringify(defaults.fun))], vigF: [JSON.parse(JSON.stringify(defaults.vigF))], cols: [JSON.parse(JSON.stringify(defaults.cols))], vigs: [JSON.parse(JSON.stringify(defaults.vigs))], los: [JSON.parse(JSON.stringify(defaults.los))] };
+
+            // === GESTOR DE PROYECTOS V3.0 ===
+            const btnGuardarLocal = document.getElementById('btn_guardar_local');
+            const selCargarLocal = document.getElementById('gestor_lista');
+            const btnExportarJSON = document.getElementById('btn_exportar_json');
+            const btnImportarJSON = document.getElementById('btn_importar_json');
+            const inputImportar = document.getElementById('gestor_importar');
+
+            function obtenerDatosProyecto() {
+                return {
+                    version: "3.0",
+                    nombre: document.getElementById('gestor_nombre').value || "PROYECTO_SIN_NOMBRE",
+                    fecha: new Date().toISOString(),
+                    pesoBolsa: pesoBolsaCemento,
+                    estado: estado,
+                    meta: {
+                        obra: document.getElementById('info_obra').value,
+                        ubi: document.getElementById('info_ubi').value,
+                        comitente: document.getElementById('info_comitente').value,
+                        profesional: document.getElementById('info_profesional').value
+                    }
+                };
+            }
+
+            function aplicarDatosProyecto(datos) {
+                if(!datos.estado) return alert("Archivo de proyecto no válido.");
+                
+                estado.fun = datos.estado.fun || [];
+                estado.vigF = datos.estado.vigF || [];
+                estado.cols = datos.estado.cols || [];
+                estado.vigs = datos.estado.vigs || [];
+                estado.los = datos.estado.los || [];
+
+                pesoBolsaCemento = datos.pesoBolsa || 50;
+                document.getElementById('gestor_nombre').value = datos.nombre !== "PROYECTO_SIN_NOMBRE" ? datos.nombre : "";
+                
+                if(datos.meta) {
+                    document.getElementById('info_obra').value = datos.meta.obra || "";
+                    document.getElementById('info_ubi').value = datos.meta.ubi || "";
+                    document.getElementById('info_comitente').value = datos.meta.comitente || "";
+                    document.getElementById('info_profesional').value = datos.meta.profesional || "";
+                }
+
+                // Refrescar contadores de UI
+                document.getElementById('val_fun').textContent = estado.fun.length;
+                document.getElementById('val_vigF').textContent = estado.vigF.length;
+                document.getElementById('val_cols').textContent = estado.cols.length;
+                document.getElementById('val_vigs').textContent = estado.vigs.length;
+                document.getElementById('val_los').textContent = estado.los.length;
+
+                renderTodo();
+                alert(`Proyecto "${datos.nombre}" cargado correctamente.`);
+            }
+
+            function actualizarListaLocales() {
+                selCargarLocal.innerHTML = '<option value="">📂 CARGAR PROYECTO...</option>';
+                for(let i=0; i<localStorage.length; i++) {
+                    let key = localStorage.key(i);
+                    if(key.startsWith('calcV3_')) {
+                        let nom = key.replace('calcV3_', '');
+                        selCargarLocal.innerHTML += `<option value="${key}">${nom}</option>`;
+                    }
+                }
+            }
+
+            btnGuardarLocal.addEventListener('click', () => {
+                let datos = obtenerDatosProyecto();
+                if(datos.nombre === "PROYECTO_SIN_NOMBRE") {
+                    let nom = prompt("Ingresá un nombre para guardar el proyecto:");
+                    if(!nom) return;
+                    datos.nombre = nom.toUpperCase();
+                    document.getElementById('gestor_nombre').value = datos.nombre;
+                }
+                localStorage.setItem('calcV3_' + datos.nombre, JSON.stringify(datos));
+                actualizarListaLocales();
+                alert(`Proyecto "${datos.nombre}" guardado en el navegador.`);
+            });
+
+            selCargarLocal.addEventListener('change', (e) => {
+                let key = e.target.value;
+                if(!key) return;
+                let dataStr = localStorage.getItem(key);
+                if(dataStr) {
+                    aplicarDatosProyecto(JSON.parse(dataStr));
+                }
+                e.target.value = ""; 
+            });
+
+            btnExportarJSON.addEventListener('click', () => {
+                let datos = obtenerDatosProyecto();
+                let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(datos, null, 2));
+                let dl = document.createElement('a');
+                dl.setAttribute("href", dataStr);
+                dl.setAttribute("download", `${datos.nombre.replace(/\s+/g, '_')}_V3.json`);
+                dl.click();
+            });
+
+            btnImportarJSON.addEventListener('click', () => inputImportar.click());
+
+            inputImportar.addEventListener('change', (e) => {
+                let file = e.target.files[0];
+                if(!file) return;
+                let reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        let json = JSON.parse(evt.target.result);
+                        aplicarDatosProyecto(json);
+                    } catch(err) {
+                        alert("Error al leer el archivo. Asegurate de que sea un proyecto generado por esta calculadora.");
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = "";
+            });
+
+            actualizarListaLocales();
+            // === FIN GESTOR DE PROYECTOS ===
+
+            function fmt(num) { return parseFloat(num).toFixed(2).replace('.', ','); }
+            function calcMat(tipoH, vol, hierros) {
+                const r = recetas[tipoH], w = 1.10, res = { neto: { vol, cemento: r.c*vol, arena: r.a*vol, piedra: r.p*vol, elaborado: r.el*vol }, bruto: { vol: vol*w, cemento: r.c*vol*w, arena: r.a*vol*w, piedra: r.p*vol*w, elaborado: r.el*vol*w } };
+                for(let k in hierros) { res.neto[k] = hierros[k]; res.bruto[k] = hierros[k] * w; }
+                return res;
+            }
+
+            function getSVG(tipo, d1, d2, d3, lbl1, lbl2, lbl3) {
+                const mk = `<defs><marker id="arr" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto-start-reverse"><polygon points="0,0 4,2 0,4" fill="#737373"/></marker></defs>`;
+                const tBase = `class="w-full h-full absolute inset-0 font-mono font-bold fill-neutral-600 drop-shadow-sm" style="font-size: 9px;" viewBox="-15 -15 230 230"`;
+                
+                if (tipo === 'viga') {
+                    return `<svg ${tBase}>
+                        ${mk}
+                        <polygon points="60,150 160,100 160,60 60,110" fill="#d4d4d4" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="60,150 30,135 30,95 60,110" fill="#f5f5f5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="60,110 30,95 130,45 160,60" fill="#e5e5e5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <line x1="65" y1="160" x2="165" y2="110" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="115" y="135" transform="rotate(-26.565 115 135)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl3}: ${d3} M</text>
+                        <line x1="55" y1="160" x2="25" y2="145" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="40" y="152" transform="rotate(26.565 40 152)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl1}: ${d1} M</text>
+                        <line x1="20" y1="135" x2="20" y2="95" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="20" y="115" transform="rotate(-90 20 115)" text-anchor="middle" font-size="9" fill="#525252" dy="-8">${lbl2}: ${d2} M</text>
+                    </svg>`;
+                }
+                
+                if (tipo === 'columna') {
+                    return `<svg ${tBase}>
+                        ${mk}
+                        <polygon points="100,180 140,160 140,40 100,60" fill="#d4d4d4" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,180 60,160 60,40 100,60" fill="#f5f5f5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,60 60,40 100,20 140,40" fill="#e5e5e5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <line x1="105" y1="188" x2="145" y2="168" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="125" y="178" transform="rotate(-26.565 125 178)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl1}: ${d1} M</text>
+                        <line x1="95" y1="188" x2="55" y2="168" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="75" y="178" transform="rotate(26.565 75 178)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl2}: ${d2} M</text>
+                        <line x1="50" y1="160" x2="50" y2="40" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="50" y="100" transform="rotate(-90 50 100)" text-anchor="middle" font-size="9" fill="#525252" dy="-8">${lbl3}: ${d3} M</text>
+                    </svg>`;
+                }
+                
+                if (tipo === 'losa') {
+                    return `<svg ${tBase}>
+                        ${mk}
+                        <polygon points="100,160 180,120 180,110 100,150" fill="#d4d4d4" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,160 20,120 20,110 100,150" fill="#f5f5f5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,150 20,110 100,70 180,110" fill="#e5e5e5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <line x1="105" y1="168" x2="185" y2="128" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="145" y="148" transform="rotate(-26.565 145 148)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl3}: ${d3} M</text>
+                        <line x1="95" y1="168" x2="15" y2="128" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="55" y="148" transform="rotate(26.565 55 148)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl1}: ${d1} M</text>
+                        <line x1="12" y1="120" x2="12" y2="110" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="12" y="115" transform="rotate(-90 12 115)" text-anchor="middle" font-size="9" fill="#525252" dy="-8">${lbl2}: ${d2} M</text>
+                    </svg>`;
+                }
+                
+                if (tipo === 'pilotin') {
+                    return `<svg ${tBase}>
+                        ${mk}
+                        <path d="M 65,50 L 65,150 A 35 15 0 0 0 135,150 L 135,50" fill="#e5e5e5" stroke="#525252" stroke-width="1.5"/>
+                        <ellipse cx="100" cy="50" rx="35" ry="15" fill="#f5f5f5" stroke="#525252" stroke-width="1.5"/>
+                        <line x1="65" y1="25" x2="135" y2="25" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <line x1="65" y1="20" x2="65" y2="30" stroke="#737373" stroke-width="0.5"/>
+                        <line x1="135" y1="20" x2="135" y2="30" stroke="#737373" stroke-width="0.5"/>
+                        <text x="100" y="25" text-anchor="middle" font-size="9" fill="#525252" dy="-8">Ø: ${d1} M</text>
+                        <line x1="145" y1="50" x2="145" y2="150" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="145" y="100" transform="rotate(-90 145 100)" text-anchor="middle" font-size="9" fill="#525252" dy="12">H: ${d2} M</text>
+                    </svg>`;
+                }
+
+                if (tipo === 'base') {
+                    return `<svg ${tBase}>
+                        ${mk}
+                        <polygon points="100,165 160,135 160,120 100,150" fill="#d4d4d4" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,165 40,135 40,120 100,150" fill="#f5f5f5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,150 160,120 125,100 100,115" fill="#c4c4c4" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,150 40,120 75,100 100,115" fill="#e5e5e5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,115 125,100 125,50 100,65" fill="#d4d4d4" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,115 75,100 75,50 100,65" fill="#f5f5f5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <polygon points="100,65 75,50 100,35 125,50" fill="#e5e5e5" stroke="#525252" stroke-width="1.5" stroke-linejoin="round"/>
+                        <line x1="105" y1="173" x2="165" y2="143" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="135" y="158" transform="rotate(-26.565 135 158)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl2}: ${d2} M</text>
+                        <line x1="95" y1="173" x2="35" y2="143" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <text x="65" y="158" transform="rotate(26.565 65 158)" text-anchor="middle" font-size="9" fill="#525252" dy="12">${lbl1}: ${d1} M</text>
+                        <line x1="170" y1="135" x2="170" y2="65" stroke="#737373" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                        <line x1="160" y1="135" x2="175" y2="135" stroke="#737373" stroke-width="0.5" stroke-dasharray="2 2"/>
+                        <line x1="100" y1="65" x2="175" y2="65" stroke="#737373" stroke-width="0.5" stroke-dasharray="2 2"/>
+                        <text x="170" y="100" transform="rotate(-90 170 100)" text-anchor="middle" font-size="9" fill="#525252" dy="12">H: ${d3} M</text>
+                    </svg>`;
+                }
+            }
+
+            const uRow = (lbl, t, i, k, min, max, stp, arrLabels) => {
+                return `<div class="flex items-center justify-between mb-3 group-row">
+                    <label class="text-neutral-600 w-2/5 text-xs font-bold leading-tight pr-2">${lbl}</label>
+                    <div class="w-2/5 flex flex-col pt-1 relative">
+                        <input type="range" class="dyn-in w-full" data-t="${t}" data-i="${i}" data-k="${k}" min="${min}" max="${max}" step="${stp}" value="${estado[t][i][k]}">
+                        <div class="flex justify-between px-1 mt-1.5 pointer-events-none">
+                            <span class="text-[9px] font-mono text-neutral-400 font-bold">${arrLabels[0]}</span>
+                            <span class="text-[9px] font-mono text-neutral-400 font-bold">${arrLabels[1]}</span>
+                            <span class="text-[9px] font-mono text-neutral-400 font-bold">${arrLabels[2]}</span>
+                            <span class="text-[9px] font-mono text-neutral-400 font-bold">${arrLabels[3]}</span>
+                            <span class="text-[9px] font-mono text-neutral-400 font-bold">${arrLabels[4]}</span>
+                        </div>
+                    </div>
+                    <input type="number" class="w-[4.5rem] bg-white border border-neutral-400 text-center py-1 rounded text-xs font-mono font-bold dyn-in" data-t="${t}" data-i="${i}" data-k="${k}" value="${estado[t][i][k]}">
+                </div>`;
+            };
+
+            const uBtn = (lbl, opts, t, i, k) => `<div class="flex items-center justify-between"><label class="text-neutral-600 w-1/3 text-xs font-bold">${lbl}</label><div class="flex bg-neutral-200 border border-neutral-400 rounded p-1 w-2/3 gap-1">${opts.map(o => `<button class="btn-base dyn-btn ${estado[t][i][k]==o||estado[t][i][k]==o.toString()?'btn-activo':''}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o}">${typeof o==='number'?'Ø'+o:o}</button>`).join('')}</div></div>`;
+            const uTab = (o1, o2, t, i, k) => `<div class="flex bg-neutral-900 p-1 rounded border border-neutral-700 gap-1 shadow-inner"><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o1.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o1.v}">${o1.l}</button><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o2.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o2.v}">${o2.l}</button></div>`;
+            const uCant = (t, i) => `<div class="flex items-center gap-2"><label class="text-xs font-bold text-neutral-400">CANT. PIEZAS:</label><input type="number" class="w-16 bg-neutral-900 text-white border border-neutral-700 text-center py-1 rounded text-xs font-mono font-bold dyn-in shadow-inner" data-t="${t}" data-i="${i}" data-k="cant" min="1" max="50" value="${estado[t][i].cant}"></div>`;
+
+            const headerTpl = (title, t, i, tabOpts = null) => `
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-neutral-800 p-3 rounded shadow mb-4 gap-4 border border-neutral-700">
+                    <div class="flex items-center gap-3">
+                        <h3 id="title_${t}_${i}" class="text-sm font-bold text-white m-0 tracking-wide">${title}</h3>
+                        ${estado[t].length > 1 ? `<button class="btn-eliminar-tipo flex items-center justify-center bg-neutral-700 hover:bg-red-500 text-neutral-300 hover:text-white transition-colors rounded px-2 py-1" data-t="${t}" data-i="${i}" title="Eliminar este tipo">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>` : ''}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-4 w-full md:w-auto md:justify-end">
+                        ${tabOpts ? uTab(tabOpts[0], tabOpts[1], t, i, 'tipo') : ''}
+                        ${uCant(t, i)}
+                    </div>
+                </div>
+            `;
+
+            const uTable = (t, i) => `<div class="overflow-hidden rounded-md border border-neutral-300 shadow-sm">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-neutral-100 border-b-2 border-neutral-300 text-neutral-800 tracking-wide">
+                        <tr><th class="py-2 px-3 font-extrabold text-xs">MATERIAL</th><th class="py-2 px-3 text-right font-extrabold text-xs">NETO</th><th class="py-2 px-3 text-right font-extrabold text-xs">+10%</th></tr>
+                    </thead>
+                    <tbody id="tb_${t}_${i}"></tbody>
+                </table>
+            </div>`;
+
+            const layoutCard = (t, i, header, contentIzq1, contentIzq2, contentResumen) => `
+                <div class="item-card">
+                    ${header}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 flex flex-col gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="flex flex-col gap-y-4 bg-white p-4 rounded border border-neutral-300 shadow-sm">
+                                    <span class="text-xs font-bold text-neutral-500 mb-1 border-b border-neutral-200 pb-2">DIMENSIONES Y HORMIGÓN</span>
+                                    ${contentIzq1}
+                                </div>
+                                <div class="flex flex-col gap-y-3 bg-neutral-100 p-4 rounded border border-neutral-300 shadow-sm">
+                                    <span class="text-xs font-bold text-neutral-500 mb-1 border-b border-neutral-200 pb-2">ARMADURA</span>
+                                    ${contentIzq2}
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                ${contentResumen}
+                            </div>
+                        </div>
+                        <div class="flex flex-col bg-white p-4 rounded border border-neutral-300 shadow-sm relative min-h-[300px]">
+                            <span class="text-xs font-bold text-neutral-400 mb-2 border-b border-neutral-100 pb-2 tracking-widest text-center">ESQUEMA ESTRUCTURAL</span>
+                            <div class="flex-1 w-full h-full min-h-[250px] relative mt-2" id="esquema_${t}_${i}"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            window.cambiarBolsa = function(peso) {
+                pesoBolsaCemento = peso;
+                calcularTodo();
+            };
+
+            function actualizarTitulosYEsquemas() {
+                estado.fun.forEach((f, i) => { const el = document.getElementById(`title_fun_${i}`); if(el) el.textContent = f.tipo==='pilotin' ? `1.${i+1} PILOTÍN - Ø${fmt(f.diamPil)} x ${fmt(f.profPil)} M` : `1.${i+1} BASE PUNTUAL - ${fmt(f.aBase)} x ${fmt(f.bBase)} x ${fmt(f.hBase)} M`; });
+                estado.vigF.forEach((v, i) => { const el = document.getElementById(`title_vigF_${i}`); if(el) el.textContent = `2.${i+1} VIGA DE FUNDACIÓN - ${fmt(v.a)} x ${fmt(v.h)} x ${fmt(v.l)} M`; });
+                estado.cols.forEach((c, i) => { const el = document.getElementById(`title_cols_${i}`); if(el) el.textContent = `3.${i+1} COLUMNA - ${fmt(c.a)} x ${fmt(c.b)} x ${fmt(c.h)} M`; });
+                estado.vigs.forEach((v, i) => { const el = document.getElementById(`title_vigs_${i}`); if(el) el.textContent = `4.${i+1} VIGA - ${fmt(v.a)} x ${fmt(v.h)} x ${fmt(v.l)} M`; });
+                estado.los.forEach((l, i) => { const el = document.getElementById(`title_los_${i}`); if(el) el.textContent = `5.${i+1} LOSA ${l.tipo.toUpperCase()} - ${fmt(l.a)} x ${fmt(l.l)} x ${fmt(l.e)} M`; });
+
+                estado.fun.forEach((f, i) => {
+                    const el = document.getElementById(`esquema_fun_${i}`);
+                    if(el) el.innerHTML = f.tipo==='pilotin' ? getSVG('pilotin', fmt(f.diamPil), fmt(f.profPil)) : getSVG('base', fmt(f.aBase), fmt(f.bBase), fmt(f.hBase), 'A', 'B', 'H');
+                });
+                
+                const updBox = (arr, t, l1, l2, l3) => arr.forEach((v, i) => {
+                    const el = document.getElementById(`esquema_${t}_${i}`);
+                    let d1 = v.a, d2, d3;
+                    if (t === 'cols') { d2 = v.b; d3 = v.h; } else { d2 = v.h; d3 = v.l; }
+                    if(el) el.innerHTML = getSVG(t==='cols'?'columna':'viga', fmt(d1), fmt(d2), fmt(d3), l1, l2, l3);
+                });
+                
+                updBox(estado.vigF, 'vigF', 'A', 'H', 'L');
+                updBox(estado.cols, 'cols', 'A', 'B', 'H');
+                updBox(estado.vigs, 'vigs', 'A', 'H', 'L');
+                
+                estado.los.forEach((l, i) => {
+                    const el = document.getElementById(`esquema_los_${i}`);
+                    if(el) el.innerHTML = getSVG('losa', fmt(l.a), fmt(l.e), fmt(l.l), 'A', 'E', 'L'); 
+                });
+            }
+
+            function renderTodo() {
+                document.getElementById('fun_container').innerHTML = estado.fun.map((f, i) => {
+                    const geo = f.tipo==='pilotin'?
+                        uRow('DIÁMETRO (M)','fun',i,'diamPil',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('PROFUNDIDAD (M)','fun',i,'profPil',1,5,0.1,['1','2','3','4','5']) : 
+                        uRow('LADO A (M)','fun',i,'aBase',0.4,2,0.1,['0.4','0.8','1.2','1.6','2.0']) + 
+                        uRow('LADO B (M)','fun',i,'bBase',0.4,2,0.1,['0.4','0.8','1.2','1.6','2.0']) + 
+                        uRow('ALTURA (M)','fun',i,'hBase',0.2,1,0.1,['0.2','0.4','0.6','0.8','1.0']);
+                        
+                    const arm = f.tipo==='pilotin'? 
+                        uBtn('Ø HIERRO PPAL.',[8,10,12,16],'fun',i,'diamPilVar') + 
+                        uRow('VARILLAS PPAL.','fun',i,'varPil',2,10,1,['2','4','6','8','10']) + 
+                        uRow('SEP. ESTRIBOS (M)','fun',i,'sepPilEstr',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) : 
+                        uBtn('Ø HIERRO PARRILLA',[8,10,12,16],'fun',i,'diamBaseVar') + 
+                        uRow('SEP. PARRILLA (M)','fun',i,'sepBaseArm',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']);
+                        
+                    return layoutCard('fun', i, headerTpl('', 'fun', i, [{l:'PILOTÍN', v:'pilotin'}, {l:'BASE PUNT.', v:'base'}]), geo + uBtn('HORMIGÓN',['H17','H21','H25','H30'],'fun',i,'hormigon'), arm, uTable('fun',i));
+                }).join('');
+                
+                const renderViga = (arr, t) => document.getElementById(`${t}_container`).innerHTML = arr.map((v, i) => {
+                    const geo = 
+                        uRow('ANCHO (M)',t,i,'a',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('ALTO (M)',t,i,'h',0.2,1,0.05,['0.2','0.4','0.6','0.8','1.0']) + 
+                        uRow('LARGO (M)',t,i,'l',2,10,0.5,['2','4','6','8','10']) + 
+                        uBtn('HORMIGÓN',['H17','H21','H25','H30'],t,i,'hormigon');
+                        
+                    const arm = 
+                        uRow('SEP. ESTRIBOS (M)',t,i,'sepEstr',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) + 
+                        '<span class="text-xs font-bold text-neutral-400 mt-2">SUPERIOR</span>' + 
+                        uBtn('Ø HIERRO SUP.',[8,10,12,16],t,i,'diamSup') + 
+                        uRow('CANT. VARILLAS',t,i,'varSup',2,10,1,['2','4','6','8','10']) + 
+                        '<span class="text-xs font-bold text-neutral-400 mt-2 border-t border-neutral-300 pt-2">INFERIOR</span>' + 
+                        uBtn('Ø HIERRO INF.',[8,10,12,16],t,i,'diamInf') + 
+                        uRow('CANT. VARILLAS',t,i,'varInf',2,10,1,['2','4','6','8','10']);
+                        
+                    return layoutCard(t, i, headerTpl('', t, i), geo, arm, uTable(t,i));
+                }).join('');
+                renderViga(estado.vigF, 'vigF'); renderViga(estado.vigs, 'vigs');
+
+                document.getElementById('cols_container').innerHTML = estado.cols.map((c, i) => {
+                    const geo = 
+                        uRow('LADO A (M)','cols',i,'a',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('LADO B (M)','cols',i,'b',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('ALTURA (M)','cols',i,'h',2,6,0.1,['2','3','4','5','6']) + 
+                        uBtn('HORMIGÓN',['H17','H21','H25','H30'],'cols',i,'hormigon');
+                        
+                    const arm = 
+                        uBtn('Ø HIERRO PPAL.',[8,10,12,16],'cols',i,'diam') + 
+                        uRow('VARILLAS PPAL.','cols',i,'varillas',4,12,2,['4','6','8','10','12']) + 
+                        uRow('SEP. ESTRIBOS (M)','cols',i,'sep',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']);
+                        
+                    return layoutCard('cols', i, headerTpl('', 'cols', i), geo, arm, uTable('cols',i));
+                }).join('');
+
+                document.getElementById('los_container').innerHTML = estado.los.map((l, i) => {
+                    const geo = 
+                        uRow('ANCHO (M)','los',i,'a',2,10,0.5,['2','4','6','8','10']) + 
+                        uRow('LARGO (M)','los',i,'l',2,10,0.5,['2','4','6','8','10']) + 
+                        uRow('ESPESOR (M)','los',i,'e',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) + 
+                        uBtn('HORMIGÓN',['H17','H21','H25','H30'],'los',i,'hormigon');
+                        
+                    const arm = 
+                        '<span class="text-xs font-bold text-neutral-400 mt-1">PRINCIPAL</span>' + 
+                        uBtn('Ø HIERRO PPAL.',[8,10,12,16],'los',i,'diamPpal') + 
+                        uRow('SEP. PPAL (M)','los',i,'sepPpal',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) + 
+                        (l.tipo==='rectangular'?`<span class="text-xs font-bold text-neutral-400 mt-2 border-t border-neutral-300 pt-2">REPARTICIÓN</span>${uBtn('Ø HIERRO REPART.',[8,10,12,16],'los',i,'diamRep')}${uRow('SEP. REPART. (M)','los',i,'sepRep',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25'])}`:'');
+                        
+                    return layoutCard('los', i, headerTpl('', 'los', i, [{l:'CUADRADA', v:'cuadrada'}, {l:'RECTANGULAR', v:'rectangular'}]), geo, arm, uTable('los',i));
+                }).join('');
+                
+                calcularTodo();
+                actualizarTitulosYEsquemas();
+            }
+
+            function calcularTodo() {
+                estado.fun.forEach((f, i) => {
+                    let vol=0, hPpal=0, hEstr=0;
+                    if(f.tipo==='pilotin') { vol = (Math.PI*Math.pow(f.diamPil/2,2)*f.profPil)*f.cant; hPpal = (f.profPil+0.5)*f.varPil*f.cant; hEstr = (Math.floor(f.profPil/f.sepPilEstr)+1)*(Math.PI*(f.diamPil-0.055))*f.cant; }
+                    else { const a_i=f.aBase*f.bBase, a_s=(f.aBase/3)*(f.bBase/3), h_t=0.15, h_p=(f.aBase-f.aBase/3)/2, h_tr=Math.max(0,f.hBase-h_t-h_p); vol = (a_i*h_t+(h_p/3)*(a_i+a_s+Math.sqrt(a_i*a_s))+a_s*h_tr)*f.cant; hPpal = ((Math.floor(f.aBase/f.sepBaseArm)+1)*(f.bBase+0.2)+(Math.floor(f.bBase/f.sepBaseArm)+1)*(f.aBase+0.2))*f.cant; }
+                    f.mat = calcMat(f.hormigon, vol, { ppal: hPpal, estr: hEstr });
+                    poblarTabla(`tb_fun_${i}`, f.mat, f.tipo==='pilotin'?f.diamPilVar:f.diamBaseVar, null, null, null, f.tipo==='pilotin'?'HIERRO PPAL':'HIERRO PARRILLA');
+                });
+
+                const calcViga = (arr, prefix) => arr.forEach((v, i) => {
+                    const vol = (v.a*v.h*v.l)*v.cant, pSup = (v.l+0.5)*v.varSup*v.cant, pInf = (v.l+0.5)*v.varInf*v.cant, estr = (Math.floor(v.l/v.sepEstr)+1)*(2*(v.a-0.05)+2*(v.h-0.05))*v.cant;
+                    v.mat = calcMat(v.hormigon, vol, { sup: pSup, inf: pInf, estr });
+                    poblarTabla(`tb_${prefix}_${i}`, v.mat, null, null, v.diamSup, v.diamInf, null);
+                });
+                calcViga(estado.vigF, 'vigF'); calcViga(estado.vigs, 'vigs');
+
+                estado.cols.forEach((c, i) => {
+                    const vol = (c.a*c.b*c.h)*c.cant, ppal = (c.h+0.5)*c.varillas*c.cant, estr = (Math.floor(c.h/c.sep)+1)*(2*(c.a-0.05)+2*(c.b-0.05))*c.cant;
+                    c.mat = calcMat(c.hormigon, vol, { ppal, estr });
+                    poblarTabla(`tb_cols_${i}`, c.mat, c.diam);
+                });
+
+                estado.los.forEach((l, i) => {
+                    const vol = (l.a*l.l*l.e)*l.cant; let pPpal=0, pRep=0;
+                    if (l.tipo === 'cuadrada') { pPpal = ((Math.floor(l.a/l.sepPpal)+1)*l.l + (Math.floor(l.l/l.sepPpal)+1)*l.a)*l.cant; }
+                    else { const sh=Math.min(l.a,l.l), lg=Math.max(l.a,l.l); pPpal=(Math.floor(lg/l.sepPpal)+1)*sh*l.cant; pRep=(Math.floor(sh/l.sepRep)+1)*lg*l.cant; }
+                    l.mat = calcMat(l.hormigon, vol, { ppal: pPpal, rep: pRep });
+                    poblarTabla(`tb_los_${i}`, l.mat, l.diamPpal, l.tipo==='rectangular'?l.diamRep:null, null, null, l.tipo==='cuadrada'?'HIERRO ARMADURA':'HIERRO PPAL');
+                });
+
+                const tot = { neto:{vol:0,cemento:0,arena:0,piedra:0,elaborado:0,h6:0,h8:0,h10:0,h12:0,h16:0}, bruto:{vol:0,cemento:0,arena:0,piedra:0,elaborado:0,h6:0,h8:0,h10:0,h12:0,h16:0} };
+                const sumar = (obj, dPpal, dRep, dSup, dInf) => {
+                    if(!obj) return;
+                    ['neto','bruto'].forEach(t => {
+                        tot[t].vol+=obj[t].vol||0; tot[t].cemento+=obj[t].cemento||0; tot[t].arena+=obj[t].arena||0; tot[t].piedra+=obj[t].piedra||0; tot[t].elaborado+=obj[t].elaborado||0;
+                        if(obj[t].estr) tot[t].h6 += obj[t].estr;
+                        if(dPpal && obj[t].ppal) tot[t]['h'+dPpal] += obj[t].ppal;
+                        if(dRep && obj[t].rep) tot[t]['h'+dRep] += obj[t].rep;
+                        if(dSup && obj[t].sup) tot[t]['h'+dSup] += obj[t].sup;
+                        if(dInf && obj[t].inf) tot[t]['h'+dInf] += obj[t].inf;
+                    });
+                };
+
+                estado.fun.forEach(f => sumar(f.mat, f.tipo==='pilotin'?f.diamPilVar:f.diamBaseVar));
+                estado.vigF.forEach(v => sumar(v.mat, null, null, v.diamSup, v.diamInf));
+                estado.cols.forEach(c => sumar(c.mat, c.diam));
+                estado.vigs.forEach(v => sumar(v.mat, null, null, v.diamSup, v.diamInf));
+                estado.los.forEach(l => sumar(l.mat, l.diamPpal, l.tipo==='rectangular'?l.diamRep:null));
+
+                document.getElementById('vol_total_obra').textContent = fmt(tot.bruto.vol) + ' M³';
+                
+                const fTot = (mat, n, b, uvHTML, cp, uvPDF) => `<tr class="border-b border-neutral-700 hover:bg-neutral-700"><td class="py-3 px-4 font-bold">${mat}</td><td class="py-3 px-4 text-right text-neutral-400 font-mono text-xs">${n}</td><td class="py-3 px-4 text-right text-neutral-100 font-mono font-bold">${b}</td><td class="py-3 px-4 text-right text-neutral-400 font-medium" data-pdf-uv="${uvPDF || uvHTML}">${uvHTML}</td><td class="py-3 px-4 text-right"><span class="bg-white text-neutral-900 font-bold py-1 px-3 border border-black rounded text-xs">${cp}</span></td></tr>`;
+                
+                let ht = '';
+                if(tot.bruto.elaborado>0) ht+=fTot('HORMIGON H30', fmt(tot.neto.elaborado)+' M³', fmt(tot.bruto.elaborado)+' M³', 'M³', Math.ceil(tot.bruto.elaborado));
+                
+                const toggleBolsa = `<div class="inline-flex bg-neutral-900 p-0.5 rounded ml-2 border border-neutral-600 align-middle shadow-inner">
+                    <button class="px-2 py-0.5 text-[10px] rounded transition-all ${pesoBolsaCemento===25?'bg-white text-black font-bold':'text-neutral-400 hover:text-white'}" onclick="window.cambiarBolsa(25)">25KG</button>
+                    <button class="px-2 py-0.5 text-[10px] rounded transition-all ${pesoBolsaCemento===50?'bg-white text-black font-bold':'text-neutral-400 hover:text-white'}" onclick="window.cambiarBolsa(50)">50KG</button>
+                </div>`;
+
+                if(tot.bruto.cemento>0) ht+=fTot('CEMENTO PORTLAND', fmt(tot.neto.cemento)+' KG', fmt(tot.bruto.cemento)+' KG', `BOLSAS ${toggleBolsa}`, Math.ceil(tot.bruto.cemento/pesoBolsaCemento), `BOLSAS ${pesoBolsaCemento}KG`);
+                
+                if(tot.bruto.arena>0) ht+=fTot('ARENA FINA', fmt(tot.neto.arena)+' M³', fmt(tot.bruto.arena)+' M³', 'BOLSÓN M³', Math.ceil(tot.bruto.arena/1));
+                if(tot.bruto.piedra>0) ht+=fTot('PIEDRA PARTIDA', fmt(tot.neto.piedra)+' M³', fmt(tot.bruto.piedra)+' M³', 'BOLSÓN M³', Math.ceil(tot.bruto.piedra/1));
+                [6,8,10,12,16].forEach(d => { if(tot.bruto['h'+d]>0) ht+=fTot(`HIERRO Ø${d}`, fmt(tot.neto['h'+d])+' M', fmt(tot.bruto['h'+d])+' M', 'BARRA 12M', Math.ceil(tot.bruto['h'+d]/12)); });
+                document.getElementById('tabla_total').innerHTML = ht;
+            }
+
+            function poblarTabla(id, mat, diamPpal, diamRep, diamSup, diamInf, lblPpal) {
+                const el = document.getElementById(id); if(!el) return;
+                const f = (n, m, br, suffix='') => `<tr class="border-b border-neutral-200 hover:bg-neutral-50 transition-colors"><td class="py-2 px-3 text-neutral-700 font-bold">${n}</td><td class="py-2 px-3 text-neutral-500 text-right font-mono">${fmt(m)}${suffix}</td><td class="py-2 px-3 text-neutral-800 text-right font-mono font-bold">${fmt(br)}${suffix}</td></tr>`;
+                
+                let h = f('VOLUMEN HORMIGÓN', mat.neto.vol, mat.bruto.vol, ' M³');
+                
+                if(mat.neto.elaborado>0) h+=f('HORM. ELABORADO', mat.neto.elaborado, mat.bruto.elaborado, ' M³');
+                else h+=f('CEMENTO', mat.neto.cemento, mat.bruto.cemento, ' KG')+f('ARENA', mat.neto.arena, mat.bruto.arena, ' M³')+f('PIEDRA', mat.neto.piedra, mat.bruto.piedra, ' M³');
+                
+                if(mat.neto.ppal>0) h+=f(`${lblPpal||'HIERRO PPAL'} (Ø${diamPpal})`, mat.neto.ppal, mat.bruto.ppal, ' M');
+                if(mat.neto.rep>0) h+=f(`HIERRO REPARTICIÓN (Ø${diamRep})`, mat.neto.rep, mat.bruto.rep, ' M');
+                if(mat.neto.sup>0) h+=f(`HIERRO SUPERIOR (Ø${diamSup})`, mat.neto.sup, mat.bruto.sup, ' M');
+                if(mat.neto.inf>0) h+=f(`HIERRO INFERIOR (Ø${diamInf})`, mat.neto.inf, mat.bruto.inf, ' M');
+                if(mat.neto.estr>0) h+=f(`HIERRO ESTRIBOS (Ø6)`, mat.neto.estr, mat.bruto.estr, ' M');
+                el.innerHTML = h;
+            }
+
+            document.addEventListener('click', e => {
+                // Eliminar un tipo de estructura individual
+                const btnEliminar = e.target.closest('.btn-eliminar-tipo');
+                if(btnEliminar) {
+                    const t = btnEliminar.dataset.t;
+                    const i = parseInt(btnEliminar.dataset.i);
+                    if(estado[t].length > 1) {
+                        estado[t].splice(i, 1);
+                        document.getElementById(`val_${t}`).textContent = estado[t].length;
+                        renderTodo();
+                    }
+                    return;
+                }
+
+                if(e.target.classList.contains('btn-tipo')) {
+                    const t = e.target.dataset.target;
+                    const op = parseInt(e.target.dataset.op);
+                    let currentLen = estado[t].length;
+                    let newVal = currentLen + op;
+                    
+                    if (newVal >= 1 && newVal <= 10) {
+                        if (op > 0) {
+                            estado[t].push(JSON.parse(JSON.stringify(defaults[t])));
+                        } else {
+                            estado[t].pop();
+                        }
+                        document.getElementById(`val_${t}`).textContent = newVal;
+                        renderTodo();
+                    }
+                    return;
+                }
+                
+                if(e.target.classList.contains('dyn-btn') || e.target.classList.contains('dyn-tab')) {
+                    const {t, i, k, v} = e.target.dataset; estado[t][i][k] = isNaN(v)?v:parseInt(v);
+                    renderTodo(); 
+                }
+            });
+
+            document.addEventListener('input', e => {
+                if(e.target.classList.contains('dyn-in')) {
+                    const {t, i, k} = e.target.dataset; 
+                    estado[t][i][k] = parseFloat(e.target.value) || 0;
+                    
+                    const rowContainer = e.target.closest('.group-row');
+                    if(rowContainer) {
+                        const sibling = rowContainer.querySelector(`.dyn-in:not([type="${e.target.type}"])`);
+                        if(sibling) sibling.value = e.target.value;
+                    }
+                    
+                    calcularTodo();
+                    actualizarTitulosYEsquemas();
+                }
+            });
+
+            document.getElementById('btn_informe').addEventListener('click', () => {
+                const f = new Date().toLocaleDateString('es-AR');
+                const vObra = document.getElementById('info_obra').value || 'NO ESPECIFICADA';
+                const vUbi = document.getElementById('info_ubi').value || 'NO ESPECIFICADA';
+                const vComitente = document.getElementById('info_comitente').value || 'NO ESPECIFICADO';
+                const vProf = document.getElementById('info_profesional').value || 'NO ESPECIFICADO';
+
+                let html = `
+                    <!DOCTYPE html>
+                    <html lang="es">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>INFORME TÉCNICO - ${vObra}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.5; margin: 30px; text-transform: uppercase; color: #000; background: #fff; } 
+                            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; } 
+                            .header h1 { margin: 0; font-size: 18px; font-weight: 900; } 
+                            .datos-obra { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; padding: 12px; border: 1px solid #000; margin-bottom: 25px; } 
+                            .dato-item { border-bottom: 1px dotted #ccc; display: flex; justify-content: space-between; } 
+                            .seccion { margin-bottom: 20px; page-break-inside: avoid; width: 100%; } 
+                            .seccion-titulo { font-size: 12px; font-weight: 900; padding: 4px 0; border-bottom: 1px solid #000; margin-bottom: 8px; } 
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 5px; } 
+                            th { padding: 4px 6px; border-bottom: 1px solid #000; text-align: left; font-size: 10px; font-weight: 900; } 
+                            td { padding: 4px 6px; border-bottom: 1px solid #ccc; font-size: 10px; } 
+                            .text-right { text-align: right; } 
+                            .font-mono { font-family: monospace; font-size: 11px; font-weight: bold; } 
+                            .total-card { margin-top: 30px; border: 2px solid #000; padding: 15px; page-break-inside: avoid;} 
+                            .total-card h2 { margin: 0 0 10px 0; font-size: 13px; border-bottom: 1px solid #000; padding-bottom: 5px; display: flex; justify-content: space-between; } 
+                            .total-card td, .total-card th { border-bottom: 1px solid #000; font-weight: bold; } 
+                            .btn-imprimir { background: #000; color: #fff; padding: 12px 30px; cursor: pointer; display: block; margin: 0 auto 25px auto; font-weight: 900; border: none; border-radius: 4px;} 
+                            @media print { .no-print { display: none !important; } body { margin: 0; padding: 10px; } }
+                        </style>
+                    </head>
+                    <body>
+                        <button class="btn-imprimir no-print" onclick="window.print()">IMPRIMIR INFORME PDF</button>
+                        <div class="header">
+                            <h1>INFORME TÉCNICO DE CÓMPUTO Y MATERIALES</h1>
+                            <p style="margin: 4px 0 0 0; font-weight: 700; color: #555;">FECHA DE EMISIÓN: ${f}</p>
+                        </div>
+                        <div class="datos-obra">
+                            <div class="dato-item"><strong>OBRA:</strong><span>${vObra}</span></div>
+                            <div class="dato-item"><strong>UBICACIÓN:</strong><span>${vUbi}</span></div>
+                            <div class="dato-item"><strong>COMITENTE:</strong><span>${vComitente}</span></div>
+                            <div class="dato-item"><strong>PROFESIONAL:</strong><span>${vProf}</span></div>
+                        </div>
+                        <div>
+                `;
+
+                function genBloque(tit, mat, dPpal, dRep, dSup, dInf) {
+                    let items = `<tr><td style="font-weight:bold;">VOLUMEN DE HORMIGÓN</td><td class="text-right font-mono" style="font-weight:bold;">${fmt(mat.neto.vol)} M³</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.vol)} M³</td></tr>`;
+                    
+                    if (mat.bruto.elaborado>0) items += `<tr><td>HORMIGON ELABORADO H30</td><td class="text-right font-mono">${fmt(mat.neto.elaborado)} M³</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.elaborado)} M³</td></tr>`;
+                    else items += `<tr><td>CEMENTO PORTLAND</td><td class="text-right font-mono">${fmt(mat.neto.cemento)} KG</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.cemento)} KG</td></tr><tr><td>ARENA FINA</td><td class="text-right font-mono">${fmt(mat.neto.arena)} M³</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.arena)} M³</td></tr><tr><td>PIEDRA PARTIDA</td><td class="text-right font-mono">${fmt(mat.neto.piedra)} M³</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.piedra)} M³</td></tr>`;
+                    
+                    if(mat.bruto.ppal>0) items += `<tr><td>${dRep?'HIERRO PPAL':'HIERRO ARMADURA'} (Ø${dPpal})</td><td class="text-right font-mono">${fmt(mat.neto.ppal)} M</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.ppal)} M</td></tr>`;
+                    if(mat.bruto.rep>0) items += `<tr><td>HIERRO REPARTICIÓN (Ø${dRep})</td><td class="text-right font-mono">${fmt(mat.neto.rep)} M</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.rep)} M</td></tr>`;
+                    if(mat.bruto.sup>0) items += `<tr><td>HIERRO SUPERIOR (Ø${dSup})</td><td class="text-right font-mono">${fmt(mat.neto.sup)} M</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.sup)} M</td></tr>`;
+                    if(mat.bruto.inf>0) items += `<tr><td>HIERRO INFERIOR (Ø${dInf})</td><td class="text-right font-mono">${fmt(mat.neto.inf)} M</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.inf)} M</td></tr>`;
+                    if(mat.bruto.estr>0) items += `<tr><td>HIERRO ESTRIBOS (Ø6)</td><td class="text-right font-mono">${fmt(mat.neto.estr)} M</td><td class="text-right font-mono font-bold">${fmt(mat.bruto.estr)} M</td></tr>`;
+                    
+                    return `<div class="seccion"><div class="seccion-titulo">${tit}</div><table><thead><tr><th style="border-bottom: 1px solid #000;">MATERIAL</th><th class="text-right" style="width:100px; border-bottom: 1px solid #000;">NETO</th><th class="text-right" style="width:100px; border-bottom: 1px solid #000;">+10%</th></tr></thead><tbody>${items}</tbody></table></div>`;
+                }
+
+                if(estado.fun[0].mat.bruto) {
+                    estado.fun.forEach((f, i) => { if(f.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_fun_${i}`).textContent + ` (CANT. PIEZAS: ${f.cant})`, f.mat, f.tipo==='pilotin'?f.diamPilVar:f.diamBaseVar, null, null, null); });
+                    estado.vigF.forEach((v, i) => { if(v.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_vigF_${i}`).textContent + ` (CANT. PIEZAS: ${v.cant})`, v.mat, null, null, v.diamSup, v.diamInf); });
+                    estado.cols.forEach((c, i) => { if(c.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_cols_${i}`).textContent + ` (CANT. PIEZAS: ${c.cant})`, c.mat, c.diam, null, null, null); });
+                    estado.vigs.forEach((v, i) => { if(v.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_vigs_${i}`).textContent + ` (CANT. PIEZAS: ${v.cant})`, v.mat, null, null, v.diamSup, v.diamInf); });
+                    estado.los.forEach((l, i) => { if(l.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_los_${i}`).textContent + ` (CANT. PIEZAS: ${l.cant})`, l.mat, l.diamPpal, l.tipo==='rectangular'?l.diamRep:null, null, null); });
+                }
+
+                html += `</div>`; 
+
+                let htmlTotales = '';
+                const filasTotal = document.getElementById('tabla_total').querySelectorAll('tr');
+                filasTotal.forEach((tr, index) => {
+                    const c = tr.children;
+                    const uvText = c[3].getAttribute('data-pdf-uv') || c[3].textContent; 
+                    
+                    htmlTotales += `<tr>
+                        <td>${c[0].textContent}</td>
+                        <td class="text-right font-mono" style="font-weight:normal;">${c[1].textContent}</td>
+                        <td class="text-right font-mono">${c[2].textContent}</td>
+                        <td class="text-right">${uvText}</td>
+                        <td class="text-right">${c[4].textContent}</td>
+                    </tr>`;
+                });
+
+                html += `
+                        <div class="total-card">
+                            <h2><span>CONSOLIDADO DE COMPRA (CON 10% DESPERDICIO)</span><span>${document.getElementById('vol_total_obra').textContent}</span></h2>
+                            <table>
+                                <thead><tr><th style="border-bottom:1px solid #000;">MATERIAL REQUERIDO</th><th class="text-right" style="border-bottom:1px solid #000;">NETO (0%)</th><th class="text-right" style="border-bottom:1px solid #000;">TOTAL (+10%)</th><th class="text-right" style="border-bottom:1px solid #000;">UNIDAD</th><th class="text-right" style="border-bottom:1px solid #000;">COMPRA</th></tr></thead>
+                                <tbody>${htmlTotales}</tbody>
+                            </table>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                const v = window.open('', '_blank'); 
+                v.document.write(html); 
+                v.document.close();
+            });
+            
+            renderTodo();
+        });
+    </script>
+</body>
+</html>
