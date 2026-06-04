@@ -1,23 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-<link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#171717">
-    <link rel="apple-touch-icon" href="./icono-192.png">
-
-    <script>
-        // Registro del Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registrado', reg))
-                    .catch(err => console.error('Error al registrar SW', err));
-            });
-        }
-    </script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALCULADORA INTEGRAL DE MATERIALES V3.0</title>
+    <title>CALCULADORA INTEGRAL DE MATERIALES V3.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { gray: tailwind.colors.neutral } } } }
@@ -49,6 +35,9 @@
         .titulo-seccion { font-size: 1.15rem; font-weight: 800; color: #171717; margin-bottom: 1.5rem; border-bottom: 2px solid #d4d4d4; padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
         .item-card { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #d4d4d4; }
         .item-card:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        
+        /* Ocultar flecha nativa de los select */
+        select.no-arrow { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     </style>
 </head>
 <body class="bg-neutral-300 p-4 md:p-8 text-neutral-900">
@@ -56,37 +45,40 @@
     <div class="max-w-[90rem] mx-auto">
         
         <div class="mb-8 border-b-4 border-neutral-800 pb-6 flex flex-col items-start">
-            <div class="inline-block bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.0 · GESTIÓN DE PROYECTOS INTEGRADA</div>
+            <div class="inline-block bg-neutral-900 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.3 · CORRECCIÓN TÍTULOS Y ESQUEMAS</div>
             <h1 class="text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none mb-2">CÓMPUTO ESTRUCTURAL</h1>
             <p class="text-neutral-600 text-xs md:text-sm font-bold tracking-widest">SISTEMA INTEGRAL DE CÁLCULO DE HORMIGÓN Y ARMADURAS</p>
         </div>
 
         <div class="bg-neutral-900 rounded-xl p-4 md:p-5 shadow-xl mb-8 border border-neutral-700 flex flex-col lg:flex-row items-center gap-4 justify-between relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500 hidden md:block"></div>
             
             <div class="flex items-center gap-3 w-full lg:w-auto md:pl-2">
                 <label class="font-bold text-neutral-400 text-xs whitespace-nowrap hidden md:block">PROYECTO:</label>
-                <input type="text" id="gestor_nombre" class="w-full lg:w-64 bg-neutral-800 border border-neutral-600 rounded px-4 py-2.5 text-white font-bold text-xs uppercase focus:outline-none focus:border-blue-500 transition-colors" placeholder="NOMBRE DEL PROYECTO">
+                <input type="text" id="gestor_nombre" class="w-full lg:w-64 bg-neutral-800 border border-neutral-600 rounded px-4 py-2.5 text-white font-bold text-xs uppercase focus:outline-none focus:border-neutral-400 transition-colors" placeholder="NOMBRE DEL PROYECTO">
             </div>
             
-            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                <button id="btn_guardar_local" class="flex-1 lg:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded transition-colors shadow-sm text-xs flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                    GUARDAR LOCAL
-                </button>
-                <select id="gestor_lista" class="flex-1 lg:flex-none bg-neutral-800 border border-neutral-600 rounded px-3 py-2.5 text-white font-bold text-xs max-w-[200px] cursor-pointer focus:outline-none">
-                    <option value="">📂 CARGAR PROYECTO...</option>
-                </select>
+            <div class="flex flex-wrap items-center justify-between lg:justify-start gap-3 w-full lg:w-auto">
+                <div class="flex gap-2">
+                    <button id="btn_guardar_local" title="Guardar Proyecto Localmente" class="bg-white hover:bg-neutral-200 text-neutral-900 font-bold py-2.5 px-5 rounded transition-colors shadow-sm text-xs flex items-center justify-center">
+                        GUARDAR LOCAL
+                    </button>
+                    <select id="gestor_lista" title="Abrir un proyecto guardado localmente" class="bg-neutral-800 border border-neutral-600 rounded px-3 py-2.5 text-white font-bold text-xs w-[120px] cursor-pointer focus:outline-none no-arrow text-center">
+                        <option value="">PROYECTOS</option>
+                    </select>
+                </div>
                 
                 <div class="w-px h-8 bg-neutral-700 hidden lg:block mx-1"></div>
                 
-                <div class="flex flex-1 lg:flex-none items-center gap-2">
-                    <button id="btn_exportar_json" class="flex-1 lg:flex-none bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-2.5 px-4 rounded transition-colors shadow-sm text-xs border border-neutral-600">
-                        📤 EXPORTAR
+                <div class="flex items-center gap-2">
+                    <button id="btn_nuevo_proyecto" title="Nuevo Proyecto (En Blanco)" class="flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 text-white p-2.5 rounded transition-colors shadow-sm border border-neutral-600">
+                        <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </button>
+                    <button id="btn_exportar_json" title="Exportar Archivo (.json)" class="flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 text-white p-2.5 rounded transition-colors shadow-sm border border-neutral-600">
+                        <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                     </button>
                     <input type="file" id="gestor_importar" accept=".json" class="hidden">
-                    <button id="btn_importar_json" class="flex-1 lg:flex-none bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-2.5 px-4 rounded transition-colors shadow-sm text-xs border border-neutral-600">
-                        📥 IMPORTAR
+                    <button id="btn_importar_json" title="Importar Archivo (.json)" class="flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 text-white p-2.5 rounded transition-colors shadow-sm border border-neutral-600">
+                        <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
                     </button>
                 </div>
             </div>
@@ -99,7 +91,7 @@
                     <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
                     <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="fun" data-op="-1">−</button>
-                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_fun">1</div>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_fun">0</div>
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="fun" data-op="1">+</button>
                     </div>
                 </div>
@@ -114,7 +106,7 @@
                     <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
                     <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigF" data-op="-1">−</button>
-                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_vigF">1</div>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_vigF">0</div>
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigF" data-op="1">+</button>
                     </div>
                 </div>
@@ -129,7 +121,7 @@
                     <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
                     <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="cols" data-op="-1">−</button>
-                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_cols">1</div>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_cols">0</div>
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="cols" data-op="1">+</button>
                     </div>
                 </div>
@@ -144,7 +136,7 @@
                     <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
                     <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigs" data-op="-1">−</button>
-                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_vigs">1</div>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_vigs">0</div>
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="vigs" data-op="1">+</button>
                     </div>
                 </div>
@@ -159,7 +151,7 @@
                     <label class="text-[11px] font-black text-neutral-500 tracking-widest">TIPOS:</label>
                     <div class="flex items-center bg-white text-neutral-900 rounded overflow-hidden border border-neutral-400 shadow-sm">
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="los" data-op="-1">−</button>
-                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_los">1</div>
+                        <div class="w-8 text-center py-1 font-mono font-black text-sm bg-white val-tipo" id="val_los">0</div>
                         <button class="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 font-black transition-colors btn-tipo text-sm" data-target="los" data-op="1">+</button>
                     </div>
                 </div>
@@ -197,9 +189,8 @@
                         <div><label class="block text-xs font-bold text-neutral-400 mb-1">COMITENTE</label><input type="text" id="info_comitente" class="w-full bg-neutral-900 border border-neutral-700 rounded px-4 py-2 text-xs text-white placeholder-neutral-500 font-bold uppercase" placeholder="EJ. FAMILIA PÉREZ"></div>
                         <div><label class="block text-xs font-bold text-neutral-400 mb-1">PROFESIONAL A CARGO</label><input type="text" id="info_profesional" class="w-full bg-neutral-900 border border-neutral-700 rounded px-4 py-2 text-xs text-white placeholder-neutral-500 font-bold uppercase" placeholder="EJ. ING. / ARQ. JUAN DOMÍNGUEZ"></div>
                     </div>
-                    <button id="btn_informe" class="flex flex-col items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-900 font-bold py-4 px-6 rounded border border-neutral-900 transition-all shadow-md text-xs text-center w-full md:w-40 min-h-[100px] shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                        <span>GENERAR<br>INFORME PDF</span>
+                    <button id="btn_informe" class="flex flex-col items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-neutral-900 font-black py-4 px-6 rounded border border-neutral-900 transition-all shadow-md text-sm text-center w-full md:w-40 min-h-[100px] shrink-0 tracking-widest leading-relaxed">
+                        GENERAR<br>INFORME PDF
                     </button>
                 </div>
             </div>
@@ -220,19 +211,20 @@
                 los: { tipo: 'cuadrada', cant: 1, a: 4, l: 5, e: 0.12, hormigon: 'H21', diamPpal: 8, sepPpal: 0.15, diamRep: 6, sepRep: 0.20, mat: {neto:{},bruto:{}} }
             };
 
-            // ESTADO PRINCIPAL DE LA CALCULADORA
-            let estado = { fun: [JSON.parse(JSON.stringify(defaults.fun))], vigF: [JSON.parse(JSON.stringify(defaults.vigF))], cols: [JSON.parse(JSON.stringify(defaults.cols))], vigs: [JSON.parse(JSON.stringify(defaults.vigs))], los: [JSON.parse(JSON.stringify(defaults.los))] };
+            // ESTADO INICIAL VACÍO (ARRANCA TODO EN 0)
+            let estado = { fun: [], vigF: [], cols: [], vigs: [], los: [] };
 
-            // === GESTOR DE PROYECTOS V3.0 ===
+            // === GESTOR DE PROYECTOS ===
             const btnGuardarLocal = document.getElementById('btn_guardar_local');
             const selCargarLocal = document.getElementById('gestor_lista');
             const btnExportarJSON = document.getElementById('btn_exportar_json');
             const btnImportarJSON = document.getElementById('btn_importar_json');
+            const btnNuevoProyecto = document.getElementById('btn_nuevo_proyecto');
             const inputImportar = document.getElementById('gestor_importar');
 
             function obtenerDatosProyecto() {
                 return {
-                    version: "3.0",
+                    version: "3.3",
                     nombre: document.getElementById('gestor_nombre').value || "PROYECTO_SIN_NOMBRE",
                     fecha: new Date().toISOString(),
                     pesoBolsa: pesoBolsaCemento,
@@ -265,7 +257,6 @@
                     document.getElementById('info_profesional').value = datos.meta.profesional || "";
                 }
 
-                // Refrescar contadores de UI
                 document.getElementById('val_fun').textContent = estado.fun.length;
                 document.getElementById('val_vigF').textContent = estado.vigF.length;
                 document.getElementById('val_cols').textContent = estado.cols.length;
@@ -277,7 +268,7 @@
             }
 
             function actualizarListaLocales() {
-                selCargarLocal.innerHTML = '<option value="">📂 CARGAR PROYECTO...</option>';
+                selCargarLocal.innerHTML = '<option value="">PROYECTOS</option>';
                 for(let i=0; i<localStorage.length; i++) {
                     let key = localStorage.key(i);
                     if(key.startsWith('calcV3_')) {
@@ -335,6 +326,20 @@
                 };
                 reader.readAsText(file);
                 e.target.value = "";
+            });
+
+            btnNuevoProyecto.addEventListener('click', () => {
+                if(confirm('¿Crear nuevo proyecto en blanco? Se perderán los datos actuales no guardados.')) {
+                    estado = { fun: [], vigF: [], cols: [], vigs: [], los: [] };
+                    document.getElementById('gestor_nombre').value = '';
+                    document.getElementById('info_obra').value = '';
+                    document.getElementById('info_ubi').value = '';
+                    document.getElementById('info_comitente').value = '';
+                    document.getElementById('info_profesional').value = '';
+                    pesoBolsaCemento = 50;
+                    ['fun', 'vigF', 'cols', 'vigs', 'los'].forEach(t => document.getElementById(`val_${t}`).textContent = '0');
+                    renderTodo();
+                }
             });
 
             actualizarListaLocales();
@@ -453,13 +458,14 @@
             const uTab = (o1, o2, t, i, k) => `<div class="flex bg-neutral-900 p-1 rounded border border-neutral-700 gap-1 shadow-inner"><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o1.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o1.v}">${o1.l}</button><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o2.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o2.v}">${o2.l}</button></div>`;
             const uCant = (t, i) => `<div class="flex items-center gap-2"><label class="text-xs font-bold text-neutral-400">CANT. PIEZAS:</label><input type="number" class="w-16 bg-neutral-900 text-white border border-neutral-700 text-center py-1 rounded text-xs font-mono font-bold dyn-in shadow-inner" data-t="${t}" data-i="${i}" data-k="cant" min="1" max="50" value="${estado[t][i].cant}"></div>`;
 
+            // CRUZ INDIVIDUAL REDISEÑADA: MÁS CUADRADA Y GRIS
             const headerTpl = (title, t, i, tabOpts = null) => `
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-neutral-800 p-3 rounded shadow mb-4 gap-4 border border-neutral-700">
                     <div class="flex items-center gap-3">
                         <h3 id="title_${t}_${i}" class="text-sm font-bold text-white m-0 tracking-wide">${title}</h3>
-                        ${estado[t].length > 1 ? `<button class="btn-eliminar-tipo flex items-center justify-center bg-neutral-700 hover:bg-red-500 text-neutral-300 hover:text-white transition-colors rounded px-2 py-1" data-t="${t}" data-i="${i}" title="Eliminar este tipo">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </button>` : ''}
+                        <button class="btn-eliminar-tipo w-6 h-6 flex items-center justify-center bg-neutral-300 hover:bg-neutral-400 text-neutral-700 transition-colors rounded shadow-sm" data-t="${t}" data-i="${i}" title="Eliminar este tipo">
+                            <span class="pointer-events-none font-black text-xs leading-none">✕</span>
+                        </button>
                     </div>
                     <div class="flex flex-wrap items-center gap-4 w-full md:w-auto md:justify-end">
                         ${tabOpts ? uTab(tabOpts[0], tabOpts[1], t, i, 'tipo') : ''}
@@ -504,10 +510,8 @@
                 </div>
             `;
 
-            window.cambiarBolsa = function(peso) {
-                pesoBolsaCemento = peso;
-                calcularTodo();
-            };
+            // RENDERIZADOR DE ESTADO VACÍO (BLOQUE PUNTEADO)
+            const emptyState = (t, msg) => `<div class="p-8 mt-2 mb-4 text-center text-neutral-400 font-bold border-2 border-dashed border-neutral-400 rounded cursor-pointer hover:bg-neutral-200 hover:text-neutral-700 transition-colors btn-tipo" data-target="${t}" data-op="1"><span class="pointer-events-none">+ ${msg}</span></div>`;
 
             function actualizarTitulosYEsquemas() {
                 estado.fun.forEach((f, i) => { const el = document.getElementById(`title_fun_${i}`); if(el) el.textContent = f.tipo==='pilotin' ? `1.${i+1} PILOTÍN - Ø${fmt(f.diamPil)} x ${fmt(f.profPil)} M` : `1.${i+1} BASE PUNTUAL - ${fmt(f.aBase)} x ${fmt(f.bBase)} x ${fmt(f.hBase)} M`; });
@@ -539,13 +543,16 @@
             }
 
             function renderTodo() {
-                document.getElementById('fun_container').innerHTML = estado.fun.map((f, i) => {
+                // Actualizar contadores
+                ['fun', 'vigF', 'cols', 'vigs', 'los'].forEach(t => document.getElementById(`val_${t}`).textContent = estado[t].length);
+
+                document.getElementById('fun_container').innerHTML = estado.fun.length === 0 ? emptyState('fun', 'AGREGAR TIPO DE FUNDACIÓN') : estado.fun.map((f, i) => {
                     const geo = f.tipo==='pilotin'?
                         uRow('DIÁMETRO (M)','fun',i,'diamPil',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
                         uRow('PROFUNDIDAD (M)','fun',i,'profPil',1,5,0.1,['1','2','3','4','5']) : 
-                        uRow('LADO A (M)','fun',i,'aBase',0.4,2,0.1,['0.4','0.8','1.2','1.6','2.0']) + 
-                        uRow('LADO B (M)','fun',i,'bBase',0.4,2,0.1,['0.4','0.8','1.2','1.6','2.0']) + 
-                        uRow('ALTURA (M)','fun',i,'hBase',0.2,1,0.1,['0.2','0.4','0.6','0.8','1.0']);
+                        uRow('LADO A (M)','fun',i,'aBase',0.8,2.0,0.1,['0.8','1.1','1.4','1.7','2.0']) + 
+                        uRow('LADO B (M)','fun',i,'bBase',0.8,2.0,0.1,['0.8','1.1','1.4','1.7','2.0']) + 
+                        uRow('ALTURA (M)','fun',i,'hBase',1.0,3.0,0.1,['1.0','1.5','2.0','2.5','3.0']);
                         
                     const arm = f.tipo==='pilotin'? 
                         uBtn('Ø HIERRO PPAL.',[8,10,12,16],'fun',i,'diamPilVar') + 
@@ -557,27 +564,26 @@
                     return layoutCard('fun', i, headerTpl('', 'fun', i, [{l:'PILOTÍN', v:'pilotin'}, {l:'BASE PUNT.', v:'base'}]), geo + uBtn('HORMIGÓN',['H17','H21','H25','H30'],'fun',i,'hormigon'), arm, uTable('fun',i));
                 }).join('');
                 
-                const renderViga = (arr, t) => document.getElementById(`${t}_container`).innerHTML = arr.map((v, i) => {
+                document.getElementById('vigF_container').innerHTML = estado.vigF.length === 0 ? emptyState('vigF', 'AGREGAR TIPO DE VIGA DE FUNDACIÓN') : estado.vigF.map((v, i) => {
                     const geo = 
-                        uRow('ANCHO (M)',t,i,'a',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
-                        uRow('ALTO (M)',t,i,'h',0.2,1,0.05,['0.2','0.4','0.6','0.8','1.0']) + 
-                        uRow('LARGO (M)',t,i,'l',2,10,0.5,['2','4','6','8','10']) + 
-                        uBtn('HORMIGÓN',['H17','H21','H25','H30'],t,i,'hormigon');
+                        uRow('ANCHO (M)','vigF',i,'a',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('ALTO (M)','vigF',i,'h',0.2,1,0.05,['0.2','0.4','0.6','0.8','1.0']) + 
+                        uRow('LARGO (M)','vigF',i,'l',2,10,0.5,['2','4','6','8','10']) + 
+                        uBtn('HORMIGÓN',['H17','H21','H25','H30'],'vigF',i,'hormigon');
                         
                     const arm = 
-                        uRow('SEP. ESTRIBOS (M)',t,i,'sepEstr',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) + 
+                        uRow('SEP. ESTRIBOS (M)','vigF',i,'sepEstr',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) + 
                         '<span class="text-xs font-bold text-neutral-400 mt-2">SUPERIOR</span>' + 
-                        uBtn('Ø HIERRO SUP.',[8,10,12,16],t,i,'diamSup') + 
-                        uRow('CANT. VARILLAS',t,i,'varSup',2,10,1,['2','4','6','8','10']) + 
+                        uBtn('Ø HIERRO SUP.',[8,10,12,16],'vigF',i,'diamSup') + 
+                        uRow('CANT. VARILLAS','vigF',i,'varSup',2,10,1,['2','4','6','8','10']) + 
                         '<span class="text-xs font-bold text-neutral-400 mt-2 border-t border-neutral-300 pt-2">INFERIOR</span>' + 
-                        uBtn('Ø HIERRO INF.',[8,10,12,16],t,i,'diamInf') + 
-                        uRow('CANT. VARILLAS',t,i,'varInf',2,10,1,['2','4','6','8','10']);
+                        uBtn('Ø HIERRO INF.',[8,10,12,16],'vigF',i,'diamInf') + 
+                        uRow('CANT. VARILLAS','vigF',i,'varInf',2,10,1,['2','4','6','8','10']);
                         
-                    return layoutCard(t, i, headerTpl('', t, i), geo, arm, uTable(t,i));
+                    return layoutCard('vigF', i, headerTpl('', 'vigF', i), geo, arm, uTable('vigF',i));
                 }).join('');
-                renderViga(estado.vigF, 'vigF'); renderViga(estado.vigs, 'vigs');
 
-                document.getElementById('cols_container').innerHTML = estado.cols.map((c, i) => {
+                document.getElementById('cols_container').innerHTML = estado.cols.length === 0 ? emptyState('cols', 'AGREGAR TIPO DE COLUMNA') : estado.cols.map((c, i) => {
                     const geo = 
                         uRow('LADO A (M)','cols',i,'a',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
                         uRow('LADO B (M)','cols',i,'b',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
@@ -592,7 +598,26 @@
                     return layoutCard('cols', i, headerTpl('', 'cols', i), geo, arm, uTable('cols',i));
                 }).join('');
 
-                document.getElementById('los_container').innerHTML = estado.los.map((l, i) => {
+                document.getElementById('vigs_container').innerHTML = estado.vigs.length === 0 ? emptyState('vigs', 'AGREGAR TIPO DE VIGA') : estado.vigs.map((v, i) => {
+                    const geo = 
+                        uRow('ANCHO (M)','vigs',i,'a',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('ALTO (M)','vigs',i,'h',0.2,1,0.05,['0.2','0.4','0.6','0.8','1.0']) + 
+                        uRow('LARGO (M)','vigs',i,'l',2,10,0.5,['2','4','6','8','10']) + 
+                        uBtn('HORMIGÓN',['H17','H21','H25','H30'],'vigs',i,'hormigon');
+                        
+                    const arm = 
+                        uRow('SEP. ESTRIBOS (M)','vigs',i,'sepEstr',0.05,0.25,0.01,['0.05','0.10','0.15','0.20','0.25']) + 
+                        '<span class="text-xs font-bold text-neutral-400 mt-2">SUPERIOR</span>' + 
+                        uBtn('Ø HIERRO SUP.',[8,10,12,16],'vigs',i,'diamSup') + 
+                        uRow('CANT. VARILLAS','vigs',i,'varSup',2,10,1,['2','4','6','8','10']) + 
+                        '<span class="text-xs font-bold text-neutral-400 mt-2 border-t border-neutral-300 pt-2">INFERIOR</span>' + 
+                        uBtn('Ø HIERRO INF.',[8,10,12,16],'vigs',i,'diamInf') + 
+                        uRow('CANT. VARILLAS','vigs',i,'varInf',2,10,1,['2','4','6','8','10']);
+                        
+                    return layoutCard('vigs', i, headerTpl('', 'vigs', i), geo, arm, uTable('vigs',i));
+                }).join('');
+
+                document.getElementById('los_container').innerHTML = estado.los.length === 0 ? emptyState('los', 'AGREGAR TIPO DE LOSA') : estado.los.map((l, i) => {
                     const geo = 
                         uRow('ANCHO (M)','los',i,'a',2,10,0.5,['2','4','6','8','10']) + 
                         uRow('LARGO (M)','los',i,'l',2,10,0.5,['2','4','6','8','10']) + 
@@ -608,6 +633,7 @@
                     return layoutCard('los', i, headerTpl('', 'los', i, [{l:'CUADRADA', v:'cuadrada'}, {l:'RECTANGULAR', v:'rectangular'}]), geo, arm, uTable('los',i));
                 }).join('');
                 
+                // RESTAURADO: Estas funciones faltaban y rompían el dibujado final de Títulos y SVGs al agregar nuevos.
                 calcularTodo();
                 actualizarTitulosYEsquemas();
             }
@@ -685,7 +711,11 @@
                 const el = document.getElementById(id); if(!el) return;
                 const f = (n, m, br, suffix='') => `<tr class="border-b border-neutral-200 hover:bg-neutral-50 transition-colors"><td class="py-2 px-3 text-neutral-700 font-bold">${n}</td><td class="py-2 px-3 text-neutral-500 text-right font-mono">${fmt(m)}${suffix}</td><td class="py-2 px-3 text-neutral-800 text-right font-mono font-bold">${fmt(br)}${suffix}</td></tr>`;
                 
-                let h = f('VOLUMEN HORMIGÓN', mat.neto.vol, mat.bruto.vol, ' M³');
+                let h = `<tr class="border-b border-neutral-200 bg-white hover:bg-neutral-50 transition-colors">
+                            <td class="py-2 px-3 text-neutral-900 font-black">VOLUMEN HORMIGÓN</td>
+                            <td class="py-2 px-3 text-neutral-600 text-right font-mono font-bold">${fmt(mat.neto.vol)} M³</td>
+                            <td class="py-2 px-3 text-neutral-900 text-right font-mono font-black">${fmt(mat.bruto.vol)} M³</td>
+                         </tr>`;
                 
                 if(mat.neto.elaborado>0) h+=f('HORM. ELABORADO', mat.neto.elaborado, mat.bruto.elaborado, ' M³');
                 else h+=f('CEMENTO', mat.neto.cemento, mat.bruto.cemento, ' KG')+f('ARENA', mat.neto.arena, mat.bruto.arena, ' M³')+f('PIEDRA', mat.neto.piedra, mat.bruto.piedra, ' M³');
@@ -699,16 +729,13 @@
             }
 
             document.addEventListener('click', e => {
-                // Eliminar un tipo de estructura individual
                 const btnEliminar = e.target.closest('.btn-eliminar-tipo');
                 if(btnEliminar) {
                     const t = btnEliminar.dataset.t;
                     const i = parseInt(btnEliminar.dataset.i);
-                    if(estado[t].length > 1) {
-                        estado[t].splice(i, 1);
-                        document.getElementById(`val_${t}`).textContent = estado[t].length;
-                        renderTodo();
-                    }
+                    estado[t].splice(i, 1);
+                    document.getElementById(`val_${t}`).textContent = estado[t].length;
+                    renderTodo();
                     return;
                 }
 
@@ -718,7 +745,7 @@
                     let currentLen = estado[t].length;
                     let newVal = currentLen + op;
                     
-                    if (newVal >= 1 && newVal <= 10) {
+                    if (newVal >= 0 && newVal <= 10) {
                         if (op > 0) {
                             estado[t].push(JSON.parse(JSON.stringify(defaults[t])));
                         } else {
@@ -815,13 +842,20 @@
                     return `<div class="seccion"><div class="seccion-titulo">${tit}</div><table><thead><tr><th style="border-bottom: 1px solid #000;">MATERIAL</th><th class="text-right" style="width:100px; border-bottom: 1px solid #000;">NETO</th><th class="text-right" style="width:100px; border-bottom: 1px solid #000;">+10%</th></tr></thead><tbody>${items}</tbody></table></div>`;
                 }
 
-                if(estado.fun[0].mat.bruto) {
-                    estado.fun.forEach((f, i) => { if(f.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_fun_${i}`).textContent + ` (CANT. PIEZAS: ${f.cant})`, f.mat, f.tipo==='pilotin'?f.diamPilVar:f.diamBaseVar, null, null, null); });
-                    estado.vigF.forEach((v, i) => { if(v.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_vigF_${i}`).textContent + ` (CANT. PIEZAS: ${v.cant})`, v.mat, null, null, v.diamSup, v.diamInf); });
-                    estado.cols.forEach((c, i) => { if(c.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_cols_${i}`).textContent + ` (CANT. PIEZAS: ${c.cant})`, c.mat, c.diam, null, null, null); });
-                    estado.vigs.forEach((v, i) => { if(v.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_vigs_${i}`).textContent + ` (CANT. PIEZAS: ${v.cant})`, v.mat, null, null, v.diamSup, v.diamInf); });
-                    estado.los.forEach((l, i) => { if(l.mat.bruto.vol>0) html += genBloque(document.getElementById(`title_los_${i}`).textContent + ` (CANT. PIEZAS: ${l.cant})`, l.mat, l.diamPpal, l.tipo==='rectangular'?l.diamRep:null, null, null); });
-                }
+                ['fun', 'vigF', 'cols', 'vigs', 'los'].forEach(t => {
+                    estado[t].forEach((item, i) => {
+                        if(item.mat && item.mat.bruto && item.mat.bruto.vol > 0) {
+                            let prefix = t === 'fun' ? 'fun' : t === 'vigF' ? 'vigF' : t === 'cols' ? 'cols' : t === 'vigs' ? 'vigs' : 'los';
+                            let dPpal = null, dRep = null, dSup = null, dInf = null;
+                            if (t === 'fun') dPpal = item.tipo==='pilotin' ? item.diamPilVar : item.diamBaseVar;
+                            else if (t === 'vigF' || t === 'vigs') { dSup = item.diamSup; dInf = item.diamInf; }
+                            else if (t === 'cols') dPpal = item.diam;
+                            else if (t === 'los') { dPpal = item.diamPpal; dRep = item.tipo==='rectangular' ? item.diamRep : null; }
+                            
+                            html += genBloque(document.getElementById(`title_${prefix}_${i}`).textContent + ` (CANT. PIEZAS: ${item.cant})`, item.mat, dPpal, dRep, dSup, dInf);
+                        }
+                    });
+                });
 
                 html += `</div>`; 
 
