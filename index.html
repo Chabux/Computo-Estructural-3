@@ -4,7 +4,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALCULADORA INTEGRAL DE MATERIALES V3.3</title>
+    <title>CALCULADORA INTEGRAL DE MATERIALES V3.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { gray: tailwind.colors.neutral } } } }
@@ -46,7 +46,7 @@
     <div class="max-w-[90rem] mx-auto">
         
         <div class="mb-8 border-b-4 border-neutral-800 pb-6 flex flex-col items-start">
-            <div class="inline-block bg-neutral-900 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.3 · CORRECCIÓN TÍTULOS Y ESQUEMAS</div>
+            <div class="inline-block bg-neutral-900 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.4 · BOTONES DERECHOS, DUPLICAR Y BOLSAS OK</div>
             <h1 class="text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none mb-2">CÓMPUTO ESTRUCTURAL</h1>
             <p class="text-neutral-600 text-xs md:text-sm font-bold tracking-widest">SISTEMA INTEGRAL DE CÁLCULO DE HORMIGÓN Y ARMADURAS</p>
         </div>
@@ -212,7 +212,6 @@
                 los: { tipo: 'cuadrada', cant: 1, a: 4, l: 5, e: 0.12, hormigon: 'H21', diamPpal: 8, sepPpal: 0.15, diamRep: 6, sepRep: 0.20, mat: {neto:{},bruto:{}} }
             };
 
-            // ESTADO INICIAL VACÍO (ARRANCA TODO EN 0)
             let estado = { fun: [], vigF: [], cols: [], vigs: [], los: [] };
 
             // === GESTOR DE PROYECTOS ===
@@ -225,7 +224,7 @@
 
             function obtenerDatosProyecto() {
                 return {
-                    version: "3.3",
+                    version: "3.4",
                     nombre: document.getElementById('gestor_nombre').value || "PROYECTO_SIN_NOMBRE",
                     fecha: new Date().toISOString(),
                     pesoBolsa: pesoBolsaCemento,
@@ -344,7 +343,6 @@
             });
 
             actualizarListaLocales();
-            // === FIN GESTOR DE PROYECTOS ===
 
             function fmt(num) { return parseFloat(num).toFixed(2).replace('.', ','); }
             function calcMat(tipoH, vol, hierros) {
@@ -459,18 +457,24 @@
             const uTab = (o1, o2, t, i, k) => `<div class="flex bg-neutral-900 p-1 rounded border border-neutral-700 gap-1 shadow-inner"><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o1.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o1.v}">${o1.l}</button><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o2.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o2.v}">${o2.l}</button></div>`;
             const uCant = (t, i) => `<div class="flex items-center gap-2"><label class="text-xs font-bold text-neutral-400">CANT. PIEZAS:</label><input type="number" class="w-16 bg-neutral-900 text-white border border-neutral-700 text-center py-1 rounded text-xs font-mono font-bold dyn-in shadow-inner" data-t="${t}" data-i="${i}" data-k="cant" min="1" max="50" value="${estado[t][i].cant}"></div>`;
 
-            // CRUZ INDIVIDUAL REDISEÑADA: MÁS CUADRADA Y GRIS
+            // NUEVO LAYOUT DE BARRA SUPERIOR: Botones a la derecha, sumamos Duplicar
             const headerTpl = (title, t, i, tabOpts = null) => `
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-neutral-800 p-3 rounded shadow mb-4 gap-4 border border-neutral-700">
                     <div class="flex items-center gap-3">
                         <h3 id="title_${t}_${i}" class="text-sm font-bold text-white m-0 tracking-wide">${title}</h3>
-                        <button class="btn-eliminar-tipo w-6 h-6 flex items-center justify-center bg-neutral-300 hover:bg-neutral-400 text-neutral-700 transition-colors rounded shadow-sm" data-t="${t}" data-i="${i}" title="Eliminar este tipo">
-                            <span class="pointer-events-none font-black text-xs leading-none">✕</span>
-                        </button>
                     </div>
-                    <div class="flex flex-wrap items-center gap-4 w-full md:w-auto md:justify-end">
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto md:justify-end">
                         ${tabOpts ? uTab(tabOpts[0], tabOpts[1], t, i, 'tipo') : ''}
                         ${uCant(t, i)}
+                        <div class="w-px h-6 bg-neutral-600 hidden md:block mx-1"></div>
+                        <div class="flex gap-2">
+                            <button class="btn-duplicar-tipo w-8 h-8 flex items-center justify-center bg-neutral-700 hover:bg-neutral-600 text-white transition-colors rounded shadow-sm border border-neutral-500" data-t="${t}" data-i="${i}" title="Duplicar esta estructura">
+                                <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                            </button>
+                            <button class="btn-eliminar-tipo w-8 h-8 flex items-center justify-center bg-neutral-300 hover:bg-neutral-400 text-neutral-800 transition-colors rounded shadow-sm" data-t="${t}" data-i="${i}" title="Eliminar esta estructura">
+                                <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -511,7 +515,6 @@
                 </div>
             `;
 
-            // RENDERIZADOR DE ESTADO VACÍO (BLOQUE PUNTEADO)
             const emptyState = (t, msg) => `<div class="p-8 mt-2 mb-4 text-center text-neutral-400 font-bold border-2 border-dashed border-neutral-400 rounded cursor-pointer hover:bg-neutral-200 hover:text-neutral-700 transition-colors btn-tipo" data-target="${t}" data-op="1"><span class="pointer-events-none">+ ${msg}</span></div>`;
 
             function actualizarTitulosYEsquemas() {
@@ -544,12 +547,12 @@
             }
 
             function renderTodo() {
-                // Actualizar contadores
                 ['fun', 'vigF', 'cols', 'vigs', 'los'].forEach(t => document.getElementById(`val_${t}`).textContent = estado[t].length);
 
                 document.getElementById('fun_container').innerHTML = estado.fun.length === 0 ? emptyState('fun', 'AGREGAR TIPO DE FUNDACIÓN') : estado.fun.map((f, i) => {
+                    // ESCALA PILOTINES ACTUALIZADA: de 0.2 a 0.6
                     const geo = f.tipo==='pilotin'?
-                        uRow('DIÁMETRO (M)','fun',i,'diamPil',0.1,0.5,0.05,['0.1','0.2','0.3','0.4','0.5']) + 
+                        uRow('DIÁMETRO (M)','fun',i,'diamPil',0.2,0.6,0.1,['0.2','0.3','0.4','0.5','0.6']) + 
                         uRow('PROFUNDIDAD (M)','fun',i,'profPil',1,5,0.1,['1','2','3','4','5']) : 
                         uRow('LADO A (M)','fun',i,'aBase',0.8,2.0,0.1,['0.8','1.1','1.4','1.7','2.0']) + 
                         uRow('LADO B (M)','fun',i,'bBase',0.8,2.0,0.1,['0.8','1.1','1.4','1.7','2.0']) + 
@@ -634,7 +637,6 @@
                     return layoutCard('los', i, headerTpl('', 'los', i, [{l:'CUADRADA', v:'cuadrada'}, {l:'RECTANGULAR', v:'rectangular'}]), geo, arm, uTable('los',i));
                 }).join('');
                 
-                // RESTAURADO: Estas funciones faltaban y rompían el dibujado final de Títulos y SVGs al agregar nuevos.
                 calcularTodo();
                 actualizarTitulosYEsquemas();
             }
@@ -695,9 +697,10 @@
                 let ht = '';
                 if(tot.bruto.elaborado>0) ht+=fTot('HORMIGON H30', fmt(tot.neto.elaborado)+' M³', fmt(tot.bruto.elaborado)+' M³', 'M³', Math.ceil(tot.bruto.elaborado));
                 
+                // DELEGACIÓN DEL BOTÓN DE BOLSAS
                 const toggleBolsa = `<div class="inline-flex bg-neutral-900 p-0.5 rounded ml-2 border border-neutral-600 align-middle shadow-inner">
-                    <button class="px-2 py-0.5 text-[10px] rounded transition-all ${pesoBolsaCemento===25?'bg-white text-black font-bold':'text-neutral-400 hover:text-white'}" onclick="window.cambiarBolsa(25)">25KG</button>
-                    <button class="px-2 py-0.5 text-[10px] rounded transition-all ${pesoBolsaCemento===50?'bg-white text-black font-bold':'text-neutral-400 hover:text-white'}" onclick="window.cambiarBolsa(50)">50KG</button>
+                    <button class="btn-bolsa px-2 py-0.5 text-[10px] rounded transition-all ${pesoBolsaCemento===25?'bg-white text-black font-bold':'text-neutral-400 hover:text-white'}" data-peso="25">25KG</button>
+                    <button class="btn-bolsa px-2 py-0.5 text-[10px] rounded transition-all ${pesoBolsaCemento===50?'bg-white text-black font-bold':'text-neutral-400 hover:text-white'}" data-peso="50">50KG</button>
                 </div>`;
 
                 if(tot.bruto.cemento>0) ht+=fTot('CEMENTO PORTLAND', fmt(tot.neto.cemento)+' KG', fmt(tot.bruto.cemento)+' KG', `BOLSAS ${toggleBolsa}`, Math.ceil(tot.bruto.cemento/pesoBolsaCemento), `BOLSAS ${pesoBolsaCemento}KG`);
@@ -730,11 +733,37 @@
             }
 
             document.addEventListener('click', e => {
+                
+                // EVENTO DE SELECCIONAR BOLSA DE CEMENTO (25kg o 50kg)
+                if(e.target.classList.contains('btn-bolsa')) {
+                    pesoBolsaCemento = parseInt(e.target.dataset.peso);
+                    calcularTodo();
+                    return;
+                }
+
+                // EVENTO ELIMINAR ESTRUCTURA
                 const btnEliminar = e.target.closest('.btn-eliminar-tipo');
                 if(btnEliminar) {
-                    const t = btnEliminar.dataset.t;
-                    const i = parseInt(btnEliminar.dataset.i);
-                    estado[t].splice(i, 1);
+                    if(confirm("¿Estás seguro de que querés eliminar esta estructura?")) {
+                        const t = btnEliminar.dataset.t;
+                        const i = parseInt(btnEliminar.dataset.i);
+                        estado[t].splice(i, 1);
+                        document.getElementById(`val_${t}`).textContent = estado[t].length;
+                        renderTodo();
+                    }
+                    return;
+                }
+
+                // EVENTO DUPLICAR ESTRUCTURA
+                const btnDuplicar = e.target.closest('.btn-duplicar-tipo');
+                if(btnDuplicar) {
+                    const t = btnDuplicar.dataset.t;
+                    const i = parseInt(btnDuplicar.dataset.i);
+                    if (estado[t].length >= 10) return alert("Alcanzaste el límite de 10 estructuras para esta categoría.");
+                    
+                    // Clonar profundamente el objeto para independizarlo
+                    const copia = JSON.parse(JSON.stringify(estado[t][i]));
+                    estado[t].push(copia);
                     document.getElementById(`val_${t}`).textContent = estado[t].length;
                     renderTodo();
                     return;
@@ -750,9 +779,13 @@
                         if (op > 0) {
                             estado[t].push(JSON.parse(JSON.stringify(defaults[t])));
                         } else {
-                            estado[t].pop();
+                            if(confirm("¿Estás seguro de que querés eliminar la última estructura?")) {
+                                estado[t].pop();
+                            } else {
+                                return;
+                            }
                         }
-                        document.getElementById(`val_${t}`).textContent = newVal;
+                        document.getElementById(`val_${t}`).textContent = estado[t].length;
                         renderTodo();
                     }
                     return;

@@ -1,5 +1,5 @@
 // 1. CAMBIÁ ESTE NOMBRE CADA VEZ QUE ACTUALICES LA APP (ej: v4, v5, v6...)
-const CACHE_NAME = 'computo-estructural-v3.3'; 
+const CACHE_NAME = 'computo-estructural-v3.5'; 
 
 const urlsToCache = [
   './',
