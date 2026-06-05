@@ -4,7 +4,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALCULADORA INTEGRAL DE MATERIALES V3.4</title>
+    <title>CALCULADORA INTEGRAL DE MATERIALES V3.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { gray: tailwind.colors.neutral } } } }
@@ -46,7 +46,7 @@
     <div class="max-w-[90rem] mx-auto">
         
         <div class="mb-8 border-b-4 border-neutral-800 pb-6 flex flex-col items-start">
-            <div class="inline-block bg-neutral-900 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.4 · BOTONES DERECHOS, DUPLICAR Y BOLSAS OK</div>
+            <div class="inline-block bg-neutral-900 text-white px-3 py-1 rounded text-[10px] font-bold tracking-widest mb-3 shadow-sm">VERSIÓN 3.5 · DISEÑO DE BOTONES Y TABLA HOMOGENEIZADO</div>
             <h1 class="text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none mb-2">CÓMPUTO ESTRUCTURAL</h1>
             <p class="text-neutral-600 text-xs md:text-sm font-bold tracking-widest">SISTEMA INTEGRAL DE CÁLCULO DE HORMIGÓN Y ARMADURAS</p>
         </div>
@@ -224,7 +224,7 @@
 
             function obtenerDatosProyecto() {
                 return {
-                    version: "3.4",
+                    version: "3.5",
                     nombre: document.getElementById('gestor_nombre').value || "PROYECTO_SIN_NOMBRE",
                     fecha: new Date().toISOString(),
                     pesoBolsa: pesoBolsaCemento,
@@ -455,23 +455,23 @@
 
             const uBtn = (lbl, opts, t, i, k) => `<div class="flex items-center justify-between"><label class="text-neutral-600 w-1/3 text-xs font-bold">${lbl}</label><div class="flex bg-neutral-200 border border-neutral-400 rounded p-1 w-2/3 gap-1">${opts.map(o => `<button class="btn-base dyn-btn ${estado[t][i][k]==o||estado[t][i][k]==o.toString()?'btn-activo':''}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o}">${typeof o==='number'?'Ø'+o:o}</button>`).join('')}</div></div>`;
             const uTab = (o1, o2, t, i, k) => `<div class="flex bg-neutral-900 p-1 rounded border border-neutral-700 gap-1 shadow-inner"><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o1.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o1.v}">${o1.l}</button><button class="flex-1 px-3 py-1 text-xs font-bold rounded transition-all dyn-tab whitespace-nowrap ${estado[t][i][k]===o2.v?'bg-white text-neutral-900 shadow':'text-neutral-400 hover:text-white'}" data-t="${t}" data-i="${i}" data-k="${k}" data-v="${o2.v}">${o2.l}</button></div>`;
-            const uCant = (t, i) => `<div class="flex items-center gap-2"><label class="text-xs font-bold text-neutral-400">CANT. PIEZAS:</label><input type="number" class="w-16 bg-neutral-900 text-white border border-neutral-700 text-center py-1 rounded text-xs font-mono font-bold dyn-in shadow-inner" data-t="${t}" data-i="${i}" data-k="cant" min="1" max="50" value="${estado[t][i].cant}"></div>`;
+            const uCant = (t, i) => `<div class="flex items-center gap-2"><label class="text-xs font-bold text-white">CANT.</label><input type="number" class="w-14 bg-neutral-900 text-white border border-neutral-700 text-center py-1 rounded text-xs font-mono font-bold dyn-in shadow-inner" data-t="${t}" data-i="${i}" data-k="cant" min="1" max="50" value="${estado[t][i].cant}"></div>`;
 
-            // NUEVO LAYOUT DE BARRA SUPERIOR: Botones a la derecha, sumamos Duplicar
+            // LAYOUT DE BARRA SUPERIOR: Ajustes de botones (Fondo y lineas), y CANT al lado del titulo
             const headerTpl = (title, t, i, tabOpts = null) => `
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-neutral-800 p-3 rounded shadow mb-4 gap-4 border border-neutral-700">
                     <div class="flex items-center gap-3">
                         <h3 id="title_${t}_${i}" class="text-sm font-bold text-white m-0 tracking-wide">${title}</h3>
+                        <div class="w-px h-5 bg-white mx-1"></div>
+                        ${uCant(t, i)}
                     </div>
                     <div class="flex flex-wrap items-center gap-3 w-full md:w-auto md:justify-end">
                         ${tabOpts ? uTab(tabOpts[0], tabOpts[1], t, i, 'tipo') : ''}
-                        ${uCant(t, i)}
-                        <div class="w-px h-6 bg-neutral-600 hidden md:block mx-1"></div>
-                        <div class="flex gap-2">
-                            <button class="btn-duplicar-tipo w-8 h-8 flex items-center justify-center bg-neutral-700 hover:bg-neutral-600 text-white transition-colors rounded shadow-sm border border-neutral-500" data-t="${t}" data-i="${i}" title="Duplicar esta estructura">
+                        <div class="flex gap-2 ml-1">
+                            <button class="btn-duplicar-tipo w-8 h-8 flex items-center justify-center bg-[#262626] hover:bg-neutral-700 text-white transition-colors rounded shadow-sm border border-neutral-600" data-t="${t}" data-i="${i}" title="Duplicar esta estructura">
                                 <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
                             </button>
-                            <button class="btn-eliminar-tipo w-8 h-8 flex items-center justify-center bg-neutral-300 hover:bg-neutral-400 text-neutral-800 transition-colors rounded shadow-sm" data-t="${t}" data-i="${i}" title="Eliminar esta estructura">
+                            <button class="btn-eliminar-tipo w-8 h-8 flex items-center justify-center bg-[#262626] hover:bg-neutral-700 text-white transition-colors rounded shadow-sm border border-neutral-600" data-t="${t}" data-i="${i}" title="Eliminar esta estructura">
                                 <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
@@ -550,7 +550,6 @@
                 ['fun', 'vigF', 'cols', 'vigs', 'los'].forEach(t => document.getElementById(`val_${t}`).textContent = estado[t].length);
 
                 document.getElementById('fun_container').innerHTML = estado.fun.length === 0 ? emptyState('fun', 'AGREGAR TIPO DE FUNDACIÓN') : estado.fun.map((f, i) => {
-                    // ESCALA PILOTINES ACTUALIZADA: de 0.2 a 0.6
                     const geo = f.tipo==='pilotin'?
                         uRow('DIÁMETRO (M)','fun',i,'diamPil',0.2,0.6,0.1,['0.2','0.3','0.4','0.5','0.6']) + 
                         uRow('PROFUNDIDAD (M)','fun',i,'profPil',1,5,0.1,['1','2','3','4','5']) : 
@@ -715,11 +714,7 @@
                 const el = document.getElementById(id); if(!el) return;
                 const f = (n, m, br, suffix='') => `<tr class="border-b border-neutral-200 hover:bg-neutral-50 transition-colors"><td class="py-2 px-3 text-neutral-700 font-bold">${n}</td><td class="py-2 px-3 text-neutral-500 text-right font-mono">${fmt(m)}${suffix}</td><td class="py-2 px-3 text-neutral-800 text-right font-mono font-bold">${fmt(br)}${suffix}</td></tr>`;
                 
-                let h = `<tr class="border-b border-neutral-200 bg-white hover:bg-neutral-50 transition-colors">
-                            <td class="py-2 px-3 text-neutral-900 font-black">VOLUMEN HORMIGÓN</td>
-                            <td class="py-2 px-3 text-neutral-600 text-right font-mono font-bold">${fmt(mat.neto.vol)} M³</td>
-                            <td class="py-2 px-3 text-neutral-900 text-right font-mono font-black">${fmt(mat.bruto.vol)} M³</td>
-                         </tr>`;
+                let h = f('VOLUMEN HORMIGÓN', mat.neto.vol, mat.bruto.vol, ' M³');
                 
                 if(mat.neto.elaborado>0) h+=f('HORM. ELABORADO', mat.neto.elaborado, mat.bruto.elaborado, ' M³');
                 else h+=f('CEMENTO', mat.neto.cemento, mat.bruto.cemento, ' KG')+f('ARENA', mat.neto.arena, mat.bruto.arena, ' M³')+f('PIEDRA', mat.neto.piedra, mat.bruto.piedra, ' M³');
