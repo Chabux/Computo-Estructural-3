@@ -1,6 +1,6 @@
 {
-  "name": "Calculadora Integral de Materiales V3.0",
-  "short_name": "Cómputo V3",
+  "name": "C.E.3",
+  "short_name": "C.E.3",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#d4d4d4",
